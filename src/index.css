@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700&family=Fira+Code:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Source Serif 4", "Georgia", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "Fira Code", monospace;
+
+  --color-paper: #fdfbf7;
+  --color-cream: #f7f1e6;
+  --color-beige: #f3ece0;
+  --color-ink: #2a2a2a;
+  --color-terracotta: #b08968;
+  --color-olive: #9a8c6a;
+  --color-rust: #a85a3c;
+}
+
+@layer base {
+  body {
+    background-color: #fdfbf7;
+    color: #2a2a2a;
+    font-family: "Inter", system-ui, sans-serif;
+    background-image: radial-gradient(#f3ece0 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-attachment: fixed;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Source Serif 4", "Georgia", serif;
+  }
+}
+
+.paper-sheet {
+  background-color: #fdfbf7;
+  border: 1px solid #e5e0d8;
+  box-shadow: 0 4px 6px -1px rgba(176, 137, 104, 0.08), 0 2px 4px -1px rgba(176, 137, 104, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+}
+
+.paper-sheet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: #b08968;
+  opacity: 0.4;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.drafting-line {
+  background-image: linear-gradient(to right, #b08968 10%, transparent 10%);
+  background-position: bottom;
+  background-size: 8px 1px;
+  background-repeat: repeat-x;
+}
