@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Topic, BLOOM_LEVELS, BloomLevelType, QuestionSourceMode } from '../types';
-import { ArrowLeft, Sparkles, BookOpen, GraduationCap, CheckSquare, Square, Layers, Database, Cpu, GitCompare, Library, Sliders } from 'lucide-react';
+import { ArrowLeft, Sparkles, BookOpen, GraduationCap, CheckSquare, Square, Layers, Database, Cpu, GitCompare, Library, Sliders, Zap, Lightbulb } from 'lucide-react';
 
 interface TopicDetailProps {
   topicId: string;
@@ -101,6 +101,89 @@ export default function TopicDetail({ topicId, onGeneratePaper, onBack }: TopicD
               </div>
             </div>
 
+            {/* Speed Calculation & Mental Math Shortcuts (Big Written Reading Format) */}
+            {(() => {
+              const shortcuts = topic.speedShortcuts;
+              if (!shortcuts || shortcuts.length === 0) return null;
+              return (
+                <div className="paper-sheet rounded-2xl p-6 sm:p-8 border-2 border-amber-300/80 bg-gradient-to-br from-paper via-amber-50/30 to-cream/40 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-4 border-b border-amber-200">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-amber-100 text-amber-900 rounded-xl border border-amber-300 shadow-2xs">
+                        <Zap className="h-5 w-5 text-amber-700 fill-amber-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold text-ink">
+                          Fast Mental Math &amp; Speed Shortcuts
+                        </h3>
+                        <p className="text-xs text-olive mt-0.5">
+                          Rapid mental calculation principles to solve questions in seconds
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold bg-amber-100 text-amber-900 px-3 py-1 rounded-full border border-amber-300 shadow-2xs">
+                      ⚡ {shortcuts.length} Speed Shortcuts
+                    </span>
+                  </div>
+
+                  <div className="space-y-6">
+                    {shortcuts.map((sc, scIdx) => (
+                      <div
+                        key={scIdx}
+                        className="bg-paper rounded-2xl p-5 sm:p-6 border border-amber-200/90 shadow-2xs hover:border-amber-400 transition-all"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-beige">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 px-2.5 py-1 rounded-md border border-amber-300">
+                              {sc.method}
+                            </span>
+                            <h4 className="font-serif text-base sm:text-lg font-bold text-ink">
+                              {sc.title}
+                            </h4>
+                          </div>
+                          <span className="text-xxs font-mono text-olive bg-cream px-2.5 py-1 rounded-md border border-beige font-semibold">
+                            Shortcut #{scIdx + 1}
+                          </span>
+                        </div>
+
+                      {/* BIG Written Rule Banner */}
+                      <div className="my-3 p-4 rounded-xl bg-amber-50/60 border border-amber-200">
+                        <span className="text-xxs font-mono uppercase font-bold text-rust block mb-1">
+                          The Written Golden Rule:
+                        </span>
+                        <p className="font-serif text-sm sm:text-base text-ink font-medium leading-relaxed">
+                          {sc.rule}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        {/* Big Worked Example */}
+                        <div className="bg-cream/40 rounded-xl p-4 border border-beige flex flex-col justify-between">
+                          <span className="text-xxs font-mono uppercase font-bold text-rust flex items-center gap-1.5 mb-2">
+                            <Lightbulb className="h-3.5 w-3.5" /> Worked Example
+                          </span>
+                          <div className="font-mono text-sm sm:text-base font-bold text-ink bg-paper p-3 rounded-lg border border-beige/80 shadow-inner">
+                            {sc.example}
+                          </div>
+                        </div>
+
+                        {/* Mental Math Step */}
+                        <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-200/80 flex flex-col justify-between">
+                          <span className="text-xxs font-mono uppercase font-bold text-amber-900 flex items-center gap-1.5 mb-2">
+                            <Zap className="h-3.5 w-3.5 text-amber-700" /> Mental Calculation Step
+                          </span>
+                          <div className="text-xs sm:text-sm text-ink/90 bg-paper p-3 rounded-lg border border-amber-200/60 leading-relaxed font-sans">
+                            {sc.mentalStep}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
             {/* Elaborated Topic Comparisons (Similar Understanding Topics) */}
             {topic.comparisons && topic.comparisons.length > 0 && (
               <div className="paper-sheet rounded-xl p-6 sm:p-8 border border-beige/80">
@@ -166,27 +249,40 @@ export default function TopicDetail({ topicId, onGeneratePaper, onBack }: TopicD
               </div>
             )}
 
-            {/* Formulas List */}
+            {/* Formulas List (Big Written Reading Format) */}
             <div>
-              <h3 className="font-serif text-lg font-bold text-ink mb-4 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-terracotta" />
-                Key Formulae &amp; Formulations
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-ink flex items-center gap-2.5">
+                  <BookOpen className="h-6 w-6 text-terracotta" />
+                  Key Mathematical Formulas &amp; Laws
+                </h3>
+                <span className="text-xxs font-mono text-olive uppercase font-bold bg-cream px-2 py-0.5 rounded border border-beige">
+                  Written Formulations
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {topic.formulas.map((f, i) => (
                   <div 
                     key={i}
-                    className="bg-cream/40 rounded-lg p-4 border border-beige flex flex-col justify-between hover:bg-cream/60 transition-colors duration-150"
+                    className="bg-paper rounded-2xl p-5 border-2 border-beige/90 shadow-2xs hover:border-rust/40 transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <h4 className="font-serif text-xs font-bold text-ink mb-1">{f.name}</h4>
-                      <div className="bg-paper p-2.5 rounded-md border border-beige/60 font-mono text-xs text-rust font-semibold overflow-x-auto my-2 shadow-inner">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h4 className="font-serif text-sm font-bold text-ink">{f.name}</h4>
+                        <span className="font-mono text-xxs px-1.5 py-0.5 rounded bg-cream text-olive border border-beige font-semibold">
+                          #{i + 1}
+                        </span>
+                      </div>
+
+                      {/* Big Written Formula Display */}
+                      <div className="bg-gradient-to-r from-cream/80 to-amber-50/50 p-3.5 rounded-xl border border-beige font-mono text-sm sm:text-base text-rust font-extrabold overflow-x-auto my-2.5 tracking-wide shadow-2xs text-center">
                         {f.formula}
                       </div>
                     </div>
                     {f.note && (
-                      <p className="text-xxs text-olive/90 italic mt-1 border-t border-beige/30 pt-1">
-                        Note: {f.note}
+                      <p className="text-xs text-olive/90 mt-2 border-t border-beige/40 pt-2 font-sans leading-relaxed">
+                        <strong className="text-ink font-serif">Note:</strong> {f.note}
                       </p>
                     )}
                   </div>

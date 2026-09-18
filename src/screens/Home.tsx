@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Subject } from '../types';
-import { GraduationCap, ArrowRight, ShieldCheck, Cpu, Code2, Layers, Binary, Trophy, Users, BookOpen, Library, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, ArrowRight, ShieldCheck, Cpu, Code2, Layers, Binary, Trophy, Users, BookOpen, Library, CheckCircle2, Zap, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HomeProps {
   onSelectSubject: (id: string) => void;
   onViewLeaderboard?: () => void;
+  onViewHandbook?: () => void;
 }
 
-export default function Home({ onSelectSubject, onViewLeaderboard }: HomeProps) {
+export default function Home({ onSelectSubject, onViewLeaderboard, onViewHandbook }: HomeProps) {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export default function Home({ onSelectSubject, onViewLeaderboard }: HomeProps) 
       </div>
 
       {/* Multi-User Assessment & Live Leaderboard Banner */}
-      <div className="mb-10 bg-paper border border-amber-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-5 bg-gradient-to-r from-amber-50/50 via-paper to-cream/40">
+      <div className="mb-6 bg-paper border border-amber-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-5 bg-gradient-to-r from-amber-50/50 via-paper to-cream/40">
         <div className="flex items-start gap-4">
           <div className="p-3.5 bg-amber-100/80 text-amber-800 rounded-xl border border-amber-300 shrink-0">
             <Trophy className="h-6 w-6" />
@@ -165,6 +166,45 @@ export default function Home({ onSelectSubject, onViewLeaderboard }: HomeProps) 
           >
             <Trophy className="h-4 w-4 text-amber-300" />
             <span>Open Class Leaderboard</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Speed Math Handbook Banner */}
+      <div className="mb-10 bg-gradient-to-br from-cream/80 via-paper to-amber-50/60 border border-rust/30 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="p-3.5 bg-rust/10 text-rust rounded-xl border border-rust/20 shrink-0">
+            <Zap className="h-6 w-6 fill-rust/20 text-rust" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider bg-rust text-paper">
+                Reference Handbook
+              </span>
+              <span className="text-xxs font-mono text-olive bg-cream px-2 py-0.5 rounded border border-beige">
+                Academic &amp; Campus Placement Edition
+              </span>
+              <span className="text-xxs font-mono text-rust font-semibold">
+                15 Master Chapters • 60+ Worked Solutions
+              </span>
+            </div>
+            <h3 className="font-serif text-lg font-bold text-ink mt-1">
+              Speed Mental Math &amp; Calculation Shortcuts Handbook
+            </h3>
+            <p className="text-xs text-olive mt-0.5 leading-relaxed max-w-2xl">
+              Master rapid calculation methods: multiplying by 11, squaring numbers ending in 5, base-100 multiplication, percentage shortcuts, unit conversion, and 60+ worked examples with practice drills.
+            </p>
+          </div>
+        </div>
+
+        {onViewHandbook && (
+          <button
+            onClick={onViewHandbook}
+            className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-paper text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4 text-amber-200" />
+            <span>Open Speed Math Handbook</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         )}

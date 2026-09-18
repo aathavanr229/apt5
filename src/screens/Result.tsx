@@ -111,14 +111,20 @@ export default function Result({ attemptId, onNavigateHome, onTryAnotherTopic, o
           </h2>
 
           {/* Student credentials block */}
-          <div className="bg-cream/40 border border-beige rounded-lg p-3 my-4 grid grid-cols-2 text-xxs font-mono text-left text-olive">
+          <div className="bg-cream/40 border border-beige rounded-lg p-3 my-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xxs font-mono text-left text-olive">
             <div>
               <p>Candidate: <span className="text-ink font-semibold">{attempt.studentName}</span></p>
               <p>Roll No: <span className="text-ink font-semibold uppercase">{attempt.studentRoll}</span></p>
+              {attempt.testCode && (
+                <p>Test Code: <span className="text-rust font-bold uppercase">{attempt.testCode}</span></p>
+              )}
             </div>
-            <div className="text-right">
-              <p>Topic: <span className="text-ink font-semibold">{topic?.name}</span></p>
+            <div className="sm:text-right">
+              <p>Topic: <span className="text-ink font-semibold">{topic?.name || attempt.topicName}</span></p>
               <p>Bloom level: <span className="text-ink font-semibold uppercase">{attempt.bloomLevel}</span></p>
+              {attempt.studentDepartment && (
+                <p>Dept: <span className="text-ink font-semibold">{attempt.studentDepartment}</span></p>
+              )}
             </div>
           </div>
 

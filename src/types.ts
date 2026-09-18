@@ -19,16 +19,26 @@ export interface Subject {
   status: 'active' | 'coming_soon';
 }
 
+export interface SpeedShortcut {
+  method: string; // Fast calculation method / technique name
+  title: string; // Quick title of trick
+  rule: string;  // Mathematical principle
+  example: string; // Real worked numerical example
+  mentalStep: string; // Step-by-step mental math trick
+}
+
 export interface Topic {
   id: string;
   subjectId: string;
   name: string;
+  category?: 'quantitative' | 'logical' | 'verbal' | 'mock';
   summary: string;
   syllabusUnit: string;
   learningOutcomes: string;
   formulas: Formula[];
   formulaCount: number;
   comparisons?: TopicComparison[];
+  speedShortcuts?: SpeedShortcut[];
 }
 
 export interface Question {
@@ -85,6 +95,7 @@ export interface StudentUser {
   email?: string;
   department: string;
   password?: string;
+  emailVerified?: boolean;
   createdAt: string;
 }
 

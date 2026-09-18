@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StudentProfile } from '../components/StudentLoginModal.tsx';
-import { LogIn, UserPlus, GraduationCap, ShieldCheck, AlertCircle, BookOpen, KeyRound, User, Hash, Building2, Mail, Users } from 'lucide-react';
+import { LogIn, UserPlus, GraduationCap, ShieldCheck, AlertCircle, KeyRound, User, Hash, Building2, Mail, CheckCircle2, RefreshCw } from 'lucide-react';
 
 interface AuthGateScreenProps {
   onLoginSuccess: (student: StudentProfile) => void;
@@ -14,9 +14,61 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
   const [roll, setRoll] = useState('');
   const [department, setDepartment] = useState('Computer Science & Engineering');
   const [password, setPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Real-time institutional domain validation for sign-up email
+  const getEmailWarning = (inputEmail: string): string | null => {
+    if (!inputEmail.trim()) return null;
+    const clean = inputEmail.trim().toLowerCase();
+    if (!clean.includes('@')) return null;
+    const isKongu = /@(?:[a-zA-Z0-9-]+\.)*kongu\.(?:edu|ac\.in)$/i.test(clean);
+    if (!isKongu) {
+      return 'Only official Kongu Engineering College emails (@kongu.edu or @kongu.ac.in) are permitted.';
+    }
+    return null;
+  };
+
+  const emailWarning = mode === 'signup' ? getEmailWarning(email) : null;
+
+  const handleSendCode = async () => {
+    setError(null);
+    setSuccessMsg(null);
+    const targetEmail = email.trim() || (roll.trim() ? `${roll.trim().toLowerCase()}@kongu.edu` : '');
+    if (!targetEmail) {
+      setError('Please provide your official college Roll Number or Email Address first.');
+      return;
+    }
+    const warning = getEmailWarning(targetEmail);
+    if (warning) {
+      setError(warning);
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, roll: roll.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to dispatch verification code.');
+      } else {
+        setCodeSent(true);
+        setSuccessMsg('Verification code dispatched to your official institutional email.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error while requesting verification code.');
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +89,8 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             identifier: identifier.trim(),
-            password: password.trim()
-          })
+            password: password.trim(),
+          }),
         });
 
         const data = await res.json();
@@ -48,11 +100,19 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
           return;
         }
 
+        if (data.token) {
+          try {
+            localStorage.setItem('aptitude_token', data.token);
+          } catch (e) {
+            console.warn('Failed to store session token:', e);
+          }
+        }
+
         const profile: StudentProfile = {
           name: data.user.name,
           roll: data.user.roll,
           email: data.user.email,
-          department: data.user.department
+          department: data.user.department,
         };
 
         onLoginSuccess(profile);
@@ -64,16 +124,25 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
           return;
         }
 
+        const targetEmail = email.trim() || `${roll.trim().toLowerCase()}@kongu.edu`;
+        const warning = getEmailWarning(targetEmail);
+        if (warning) {
+          setError(warning);
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: name.trim(),
             roll: roll.trim(),
-            email: email.trim() || `${roll.trim().toLowerCase()}@kongu.edu`,
+            email: targetEmail,
             department,
-            password: password.trim()
-          })
+            password: password.trim(),
+            verificationCode: verificationCode.trim() || undefined,
+          }),
         });
 
         const data = await res.json();
@@ -83,14 +152,22 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
           return;
         }
 
+        if (data.token) {
+          try {
+            localStorage.setItem('aptitude_token', data.token);
+          } catch (e) {
+            console.warn('Failed to store session token:', e);
+          }
+        }
+
         const profile: StudentProfile = {
           name: data.user.name,
           roll: data.user.roll,
           email: data.user.email,
-          department: data.user.department
+          department: data.user.department,
         };
 
-        setSuccessMsg('Account created successfully! Logging you into the portal...');
+        setSuccessMsg('Institutional account verified & created! Entering portal...');
         setTimeout(() => {
           onLoginSuccess(profile);
         }, 600);
@@ -100,13 +177,6 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoFill = (demoId: string, demoPassword = 'password123') => {
-    setMode('login');
-    setIdentifier(demoId);
-    setPassword(demoPassword);
-    setError(null);
   };
 
   return (
@@ -122,14 +192,14 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
               Aptitude Forge
             </h1>
             <p className="text-xxs font-sans text-olive">
-              Examination, Assessment &amp; Live Ranking Portal
+              Kongu Engineering College Assessment &amp; Live Ranking Portal
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-sans text-olive">
-          <Users className="h-4 w-4 text-rust" />
-          <span className="hidden sm:inline">Universal Multi-User Access (Email / Roll No)</span>
+          <ShieldCheck className="h-4 w-4 text-rust" />
+          <span className="hidden sm:inline">Institutional Verification (@kongu.edu / @kongu.ac.in)</span>
         </div>
       </header>
 
@@ -142,12 +212,12 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
               <GraduationCap className="h-7 w-7" />
             </div>
             <h2 className="font-serif text-2xl font-bold text-ink">
-              {mode === 'login' ? 'Student Sign In' : 'Create Student Account'}
+              {mode === 'login' ? 'Student Sign In' : 'Institutional Registration'}
             </h2>
             <p className="text-xs text-olive mt-1">
-              {mode === 'login' 
-                ? 'Sign in with your Email Address or Roll Number to take tests and view class rankings' 
-                : 'Anyone can register with an email or roll number to participate in tests and leaderboard'}
+              {mode === 'login'
+                ? 'Sign in with your Roll Number or official college email to begin assessments.'
+                : 'Only official @kongu.edu or @kongu.ac.in student emails are authorized.'}
             </p>
           </div>
 
@@ -155,7 +225,11 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
           <div className="flex bg-cream/70 p-1 rounded-xl border border-beige mb-5">
             <button
               type="button"
-              onClick={() => { setMode('login'); setError(null); setSuccessMsg(null); }}
+              onClick={() => {
+                setMode('login');
+                setError(null);
+                setSuccessMsg(null);
+              }}
               className={`flex-1 py-2 text-xs font-sans font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 mode === 'login'
                   ? 'bg-paper text-ink shadow-xs border border-beige'
@@ -167,7 +241,11 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
             </button>
             <button
               type="button"
-              onClick={() => { setMode('signup'); setError(null); setSuccessMsg(null); }}
+              onClick={() => {
+                setMode('signup');
+                setError(null);
+                setSuccessMsg(null);
+              }}
               className={`flex-1 py-2 text-xs font-sans font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 mode === 'signup'
                   ? 'bg-paper text-ink shadow-xs border border-beige'
@@ -188,7 +266,10 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
                 {error.includes('Sign Up') && mode === 'login' && (
                   <button
                     type="button"
-                    onClick={() => { setMode('signup'); setError(null); }}
+                    onClick={() => {
+                      setMode('signup');
+                      setError(null);
+                    }}
                     className="text-xxs text-rust hover:underline font-bold mt-1 inline-block"
                   >
                     Click here to register your student account now →
@@ -235,7 +316,7 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
                   <Hash className="absolute left-3 top-2.5 h-4 w-4 text-olive" />
                   <input
                     type="text"
-                    placeholder="e.g. 24CSE101 or student@kongu.edu"
+                    placeholder="e.g. 24CSE101 or 24cse101@kongu.edu"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="w-full bg-paper border border-beige rounded-lg pl-9 pr-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-rust"
@@ -243,7 +324,7 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
                   />
                 </div>
                 <p className="text-xxxs text-olive mt-1">
-                  You can sign in using your college Roll Number or registered Email.
+                  Sign in using your college Roll Number or registered institutional Email.
                 </p>
               </div>
             ) : (
@@ -267,18 +348,68 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
 
                 <div>
                   <label className="block text-xs font-sans font-bold text-ink mb-1 uppercase tracking-wider">
-                    Email Address (Optional)
+                    Institutional Email (@kongu.edu / @kongu.ac.in)
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-olive" />
                     <input
                       type="email"
-                      placeholder="e.g. student@kongu.edu"
+                      placeholder={roll ? `${roll.toLowerCase()}@kongu.edu` : 'e.g. student.24cse@kongu.edu'}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-paper border border-beige rounded-lg pl-9 pr-3 py-2 text-sm text-ink focus:outline-none focus:border-rust"
+                      className={`w-full bg-paper border ${
+                        emailWarning ? 'border-rose-400 bg-rose-50/20' : 'border-beige'
+                      } rounded-lg pl-9 pr-3 py-2 text-sm text-ink focus:outline-none focus:border-rust`}
                     />
                   </div>
+                  {emailWarning ? (
+                    <p className="text-xxs text-rose-600 font-semibold mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3 inline shrink-0" />
+                      {emailWarning}
+                    </p>
+                  ) : (
+                    <p className="text-xxxs text-olive mt-1">
+                      Must be an official Kongu email ending with @kongu.edu or @kongu.ac.in.
+                    </p>
+                  )}
+                </div>
+
+                {/* Email Verification OTP Section */}
+                <div className="p-3 bg-cream/50 rounded-xl border border-beige space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-sans font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-rust" />
+                      Email Verification Code
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSendCode}
+                      disabled={sendingCode || !!emailWarning}
+                      className="text-xxs font-sans font-bold text-rust hover:text-rust-dark disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                    >
+                      {sendingCode ? (
+                        <>
+                          <RefreshCw className="h-3 w-3 animate-spin" />
+                          Sending...
+                        </>
+                      ) : codeSent ? (
+                        'Resend Code'
+                      ) : (
+                        'Send Code'
+                      )}
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit verification code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-paper border border-beige rounded-lg px-3 py-2 text-sm font-mono tracking-widest text-ink focus:outline-none focus:border-rust"
+                  />
+                  <p className="text-xxxs text-olive">
+                    Click &apos;Send Code&apos; to dispatch an institutional OTP to your college email.
+                  </p>
                 </div>
 
                 <div>
@@ -323,7 +454,7 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === 'signup' && !!emailWarning)}
               className="w-full bg-rust hover:bg-rust-dark disabled:opacity-50 text-paper font-sans font-semibold text-sm py-3 rounded-lg border border-rust shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
             >
               {loading ? (
@@ -336,53 +467,17 @@ export default function AuthGateScreen({ onLoginSuccess }: AuthGateScreenProps) 
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" />
-                  <span>Create Account &amp; Enter Portal</span>
+                  <span>Verify &amp; Create Institutional Account</span>
                 </>
               )}
             </button>
           </form>
-
-          {/* Quick Sample Student Accounts */}
-          <div className="mt-6 pt-4 border-t border-beige">
-            <p className="text-xxs font-mono uppercase text-olive font-bold mb-2 text-center">
-              Quick Sample Accounts (Click to test):
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoFill('24CSE101')}
-                className="text-left bg-cream/50 hover:bg-cream border border-beige p-2 rounded-lg transition-colors cursor-pointer"
-              >
-                <p className="font-mono text-xs font-bold text-rust">24CSE101</p>
-                <p className="text-xxs text-ink truncate">Aathavan R</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('priyadharshini.24ece@kongu.edu')}
-                className="text-left bg-cream/50 hover:bg-cream border border-beige p-2 rounded-lg transition-colors cursor-pointer"
-              >
-                <p className="font-mono text-xs font-bold text-rust truncate">Priyadharshini</p>
-                <p className="text-xxs text-ink truncate">24ECE042 (Email)</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('karthik.24mech@kongu.edu')}
-                className="text-left bg-cream/50 hover:bg-cream border border-beige p-2 rounded-lg transition-colors cursor-pointer"
-              >
-                <p className="font-mono text-xs font-bold text-rust truncate">Karthik V</p>
-                <p className="text-xxs text-ink truncate">24MECH018 (Email)</p>
-              </button>
-            </div>
-            <p className="text-xxxs text-olive text-center mt-2">
-              Password for all sample accounts: <span className="font-mono font-bold text-ink">password123</span>
-            </p>
-          </div>
         </div>
       </main>
 
       {/* Institutional Footer */}
       <footer className="border-t border-beige/80 bg-cream/30 py-4 text-center text-xs text-olive">
-        &copy; {new Date().getFullYear()} Aptitude Forge. Universal Institutional Assessment Portal.
+        &copy; {new Date().getFullYear()} Kongu Engineering College — Aptitude Forge Assessment Portal.
       </footer>
     </div>
   );

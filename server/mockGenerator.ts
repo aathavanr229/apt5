@@ -23,11 +23,25 @@ export function generateMockQuestions(
       'topic-averages',
       'topic-profit-loss',
       'topic-time-work',
+      'topic-pipes-cisterns',
       'topic-time-speed-distance',
+      'topic-trains',
+      'topic-boats-streams',
+      'topic-alligation-mixtures',
       'topic-interest',
       'topic-number-system',
       'topic-permutations',
-      'topic-probability'
+      'topic-probability',
+      'topic-ages',
+      'topic-clocks-calendars',
+      'topic-mensuration',
+      'topic-data-interpretation',
+      'topic-blood-relations',
+      'topic-syllogisms',
+      'topic-seating-arrangement',
+      'topic-coding-decoding',
+      'topic-sentence-correction',
+      'topic-reading-comprehension'
     ];
     const combined: Omit<Question, 'id' | 'approved' | 'createdAt'>[] = [];
     const perTopic = Math.max(1, Math.ceil((count * 1.3) / allTopics.length));
@@ -811,6 +825,137 @@ export function generateMockQuestions(
           }
           explanation = `Standard deck contains 52 cards. Count of ${targetCard}s = ${favorable}. Probability = ${favorable}/52.`;
         }
+        break;
+      }
+
+      case 'topic-pipes-cisterns': {
+        syllabusUnit = 'Unit III: Fluid Dynamics, Inlets, Outlets, and Tank Leakages';
+        learningOutcomes = 'Calculate filling and emptying rates and handle leak drains.';
+        const t1 = pickRandom([6, 8, 10, 12, 15, 20]);
+        const t2 = pickRandom([10, 12, 15, 20, 24, 30]);
+        const netFill = parseFloat(((t1 * t2) / (t1 + t2)).toFixed(2));
+        questionText = `Pipe A can fill a tank in ${t1} hours and Pipe B can fill it in ${t2} hours. If both pipes are opened simultaneously, in how many hours will the tank be full? (Variant #${idx + 1})`;
+        correctAnswer = `${netFill} hours`;
+        if (isMcq) {
+          options = [`${netFill} hours`, `${(netFill + 1.5).toFixed(2)} hours`, `${(netFill - 1).toFixed(2)} hours`, `${(t1 + t2) / 2} hours`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Combined Rate = 1/${t1} + 1/${t2} = (${t1}+${t2})/(${t1}×${t2}). Time = (${t1}×${t2})/(${t1}+${t2}) = ${netFill} hours.`;
+        break;
+      }
+
+      case 'topic-trains': {
+        syllabusUnit = 'Unit III: Train Lengths, Platform Crossing, and Relative Motion';
+        learningOutcomes = 'Calculate train crossing times across poles and platforms.';
+        const length = pickRandom([120, 150, 180, 200, 240, 300]);
+        const speedKmph = pickRandom([36, 54, 72, 90, 108]);
+        const speedMs = speedKmph * (5 / 18);
+        const timeSec = parseFloat((length / speedMs).toFixed(1));
+        questionText = `A train of length ${length} meters is traveling at a constant speed of ${speedKmph} km/h. How many seconds will it take to cross a stationary signal post? (Variant #${idx + 1})`;
+        correctAnswer = `${timeSec} seconds`;
+        if (isMcq) {
+          options = [`${timeSec} seconds`, `${(timeSec + 3).toFixed(1)} seconds`, `${(timeSec - 2).toFixed(1)} seconds`, `${(timeSec * 1.5).toFixed(1)} seconds`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Speed in m/s = ${speedKmph} × 5/18 = ${speedMs} m/s. Time = Distance / Speed = ${length} / ${speedMs} = ${timeSec} seconds.`;
+        break;
+      }
+
+      case 'topic-boats-streams': {
+        syllabusUnit = 'Unit III: Upstream, Downstream, and River Velocity Dynamics';
+        learningOutcomes = 'Calculate still water boat speed and river stream speed.';
+        const boatSpeed = pickRandom([10, 12, 14, 15, 16, 18, 20]);
+        const streamSpeed = pickRandom([2, 3, 4, 5]);
+        const downstream = boatSpeed + streamSpeed;
+        const upstream = boatSpeed - streamSpeed;
+        questionText = `A motorboat travels at a speed of ${downstream} km/h downstream and ${upstream} km/h upstream. What is the speed of the boat in still water? (Variant #${idx + 1})`;
+        correctAnswer = `${boatSpeed} km/h`;
+        if (isMcq) {
+          options = [`${boatSpeed} km/h`, `${boatSpeed + 2} km/h`, `${streamSpeed} km/h`, `${boatSpeed - 3} km/h`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Speed in still water = (Downstream + Upstream) / 2 = (${downstream} + ${upstream}) / 2 = ${boatSpeed} km/h.`;
+        break;
+      }
+
+      case 'topic-alligation-mixtures': {
+        syllabusUnit = 'Unit II: Rule of Alligation, Solution Replacements, and Concentrations';
+        learningOutcomes = 'Apply cross-alligation to determine blending ratios.';
+        const cheap = pickRandom([15, 20, 25, 30]);
+        const dear = cheap + pickRandom([15, 20, 25, 30]);
+        const mean = cheap + Math.round((dear - cheap) * 0.4);
+        const r1 = dear - mean;
+        const r2 = mean - cheap;
+        questionText = `In what proportion must a merchant mix grain at ₹${cheap}/kg with grain at ₹${dear}/kg so that the resulting mixture is worth ₹${mean}/kg? (Variant #${idx + 1})`;
+        correctAnswer = `${r1}:${r2}`;
+        if (isMcq) {
+          options = [`${r1}:${r2}`, `${r2}:${r1}`, `${r1 + 1}:${r2}`, `${r1}:${r2 + 2}`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Rule of Alligation: (Dearer - Mean) / (Mean - Cheaper) = (${dear} - ${mean}) / (${mean} - ${cheap}) = ${r1} : ${r2}.`;
+        break;
+      }
+
+      case 'topic-ages': {
+        syllabusUnit = 'Unit I: Age Equations, Temporal Ratios, and Difference Invariance';
+        learningOutcomes = 'Calculate present ages from temporal ratio changes.';
+        const ageA = pickRandom([15, 20, 24, 30, 36]);
+        const ageB = ageA + pickRandom([6, 8, 10, 12]);
+        const years = 5;
+        questionText = `The sum of the present ages of a father and his son is ${ageA + ageB} years. 5 years ago, the father was ${ageB - 5} years old. What is the present age of the son? (Variant #${idx + 1})`;
+        correctAnswer = `${ageA} years`;
+        if (isMcq) {
+          options = [`${ageA} years`, `${ageA + 4} years`, `${ageA - 3} years`, `${ageA + 6} years`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Father present age = (${ageB - 5}) + 5 = ${ageB} years. Son present age = Total (${ageA + ageB}) - ${ageB} = ${ageA} years.`;
+        break;
+      }
+
+      case 'topic-clocks-calendars': {
+        syllabusUnit = 'Unit IV: Angle Between Clock Hands, Leap Years, and Odd Days';
+        learningOutcomes = 'Determine the angle between the hour and minute hands of a clock.';
+        const hour = pickRandom([2, 3, 4, 5, 6, 7, 8]);
+        const minute = pickRandom([10, 15, 20, 25, 30, 40]);
+        const angle = Math.abs(30 * hour - 5.5 * minute);
+        const cleanAngle = angle > 180 ? 360 - angle : angle;
+        questionText = `What is the acute angle between the hour hand and the minute hand of a clock at ${hour}:${minute < 10 ? '0' : ''}${minute}? (Variant #${idx + 1})`;
+        correctAnswer = `${cleanAngle}°`;
+        if (isMcq) {
+          options = [`${cleanAngle}°`, `${cleanAngle + 15}°`, `${Math.max(0, cleanAngle - 10)}°`, `${cleanAngle + 25}°`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Angle formula = |30H - (11/2)M| = |30(${hour}) - 5.5(${minute})| = |${30 * hour} - ${5.5 * minute}| = ${cleanAngle}°.`;
+        break;
+      }
+
+      case 'topic-blood-relations': {
+        syllabusUnit = 'Logical Reasoning Unit I: Family Trees, Generational Hierarchies, and Coded Relationships';
+        learningOutcomes = 'Deduce genealogical relationships from descriptive clues.';
+        const scenarios = [
+          { q: 'Pointing to a photograph, Rohit said: "She is the daughter of the only son of my grandfather." How is the girl in the photograph related to Rohit?', a: 'Sister', exp: 'Rohit grandfather only son is Rohit father. The daughter of Rohit father is Rohit sister.' },
+          { q: 'A is the father of B, but B is not the son of A. What is B to A?', a: 'Daughter', exp: 'Since A is the father and B is not the son, B must logically be the daughter.' },
+          { q: 'Introducing a man, a woman said: "His wife is the only daughter of my father." How is the man related to the woman?', a: 'Husband', exp: 'Only daughter of woman\'s father is the woman herself. So the man\'s wife is the woman, meaning he is her husband.' }
+        ];
+        const sc = pickRandom(scenarios);
+        questionText = `${sc.q} (Variant #${idx + 1})`;
+        correctAnswer = sc.a;
+        if (isMcq) {
+          options = ['Sister', 'Mother', 'Daughter', 'Husband', 'Aunt'].filter(o => o !== sc.a).slice(0, 3);
+          options.push(sc.a);
+          options.sort(() => Math.random() - 0.5);
+        }
+        explanation = sc.exp;
+        break;
+      }
+
+      case 'topic-coding-decoding': {
+        syllabusUnit = 'Logical Reasoning Unit IV: Alphabetical Shifts and Pattern Matrix';
+        learningOutcomes = 'Decode letter substitution ciphers and sequence shifts.';
+        const shift = pickRandom([1, 2, 3]);
+        const words = ['CLOUD', 'BRAIN', 'SMART', 'LIGHT', 'FORGE'];
+        const word = pickRandom(words);
+        const coded = word.split('').map(c => String.fromCharCode(c.charCodeAt(0) + shift)).join('');
+        questionText = `In a certain code language, if "${word}" is coded as "${coded}", each letter is shifted by +${shift}. What is the shift rule applied? (Variant #${idx + 1})`;
+        correctAnswer = `+${shift} forward shift`;
+        if (isMcq) {
+          options = [`+${shift} forward shift`, `+${shift + 1} forward shift`, `-${shift} reverse shift`, `+${shift * 2} position step`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Comparing each character in "${word}" to "${coded}" reveals a uniform forward shift of +${shift} in the English alphabet.`;
         break;
       }
 

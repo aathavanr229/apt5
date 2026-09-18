@@ -59,6 +59,14 @@ export default function StudentLoginModal({
           return;
         }
 
+        if (data.token) {
+          try {
+            localStorage.setItem('aptitude_token', data.token);
+          } catch (e) {
+            console.warn('Failed to store session token:', e);
+          }
+        }
+
         onLogin({
           name: data.user.name,
           roll: data.user.roll,
@@ -93,6 +101,14 @@ export default function StudentLoginModal({
           return;
         }
 
+        if (data.token) {
+          try {
+            localStorage.setItem('aptitude_token', data.token);
+          } catch (e) {
+            console.warn('Failed to store session token:', e);
+          }
+        }
+
         onLogin({
           name: data.user.name,
           roll: data.user.roll,
@@ -108,12 +124,6 @@ export default function StudentLoginModal({
     }
   };
 
-  const handleQuickDemo = (demoRoll: string, demoPassword = 'password123') => {
-    setRoll(demoRoll);
-    setPassword(demoPassword);
-    setMode('login');
-    setError('');
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-fadeIn">
@@ -296,36 +306,6 @@ export default function StudentLoginModal({
                   </>
                 )}
               </button>
-
-              {/* Demo Accounts helper */}
-              <div className="pt-3 border-t border-beige mt-4">
-                <p className="text-xxs font-mono uppercase text-olive font-bold mb-1.5">
-                  Pre-registered Registered Demo Accounts:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('24CSE101')}
-                    className="text-xxs font-mono bg-cream hover:bg-beige border border-beige px-2 py-1 rounded-md text-ink hover:text-rust transition-colors cursor-pointer"
-                  >
-                    24CSE101 (Aathavan)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('24ECE042')}
-                    className="text-xxs font-mono bg-cream hover:bg-beige border border-beige px-2 py-1 rounded-md text-ink hover:text-rust transition-colors cursor-pointer"
-                  >
-                    24ECE042 (Priyadharshini)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('24MECH018')}
-                    className="text-xxs font-mono bg-cream hover:bg-beige border border-beige px-2 py-1 rounded-md text-ink hover:text-rust transition-colors cursor-pointer"
-                  >
-                    24MECH018 (Karthik)
-                  </button>
-                </div>
-              </div>
             </form>
           </div>
         )}

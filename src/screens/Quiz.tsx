@@ -10,7 +10,7 @@ interface QuizProps {
   sourceMode?: 'ai' | 'bank' | 'hybrid';
   count: number;
   student: StudentProfile | null;
-  onQuizComplete: (attemptId: string) => void;
+  onQuizComplete: (attemptId: string, testCode?: string) => void;
   onBack: () => void;
   onOpenLogin: () => void;
 }
@@ -28,6 +28,7 @@ export default function Quiz({
 }: QuizProps) {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [testCode, setTestCode] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(true);
@@ -73,6 +74,9 @@ export default function Quiz({
       })
       .then((data) => {
         setQuestions(data.questions);
+        if (data.testCode) {
+          setTestCode(data.testCode);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -100,36 +104,42 @@ export default function Quiz({
 
     try {
       const elapsedSeconds = Math.max(5, Math.floor((Date.now() - startTime) / 1000));
+      const token = localStorage.getItem('aptitude_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const requestPayload = {
+        testCode: testCode || `APT-${topicId.toUpperCase()}-${Date.now().toString().slice(-4)}`,
         topicId,
         topicName: topic?.name || 'Aptitude Test',
         bloomLevel,
-        studentName,
-        studentRoll,
-        studentEmail: student?.email || `${studentRoll.toLowerCase()}@kongu.edu`,
-        studentDepartment: student?.department || 'Computer Science & Engineering',
+        studentRoll: student?.roll || studentRoll,
         timeTakenSeconds: elapsedSeconds,
         answers: questions.map((q) => ({
           questionId: q.id,
+          userAnswer: answers[q.id] || '',
           questionText: q.questionText,
           qtype: q.qtype,
           options: q.options,
           correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
-          userAnswer: answers[q.id] || ''
+          explanation: q.explanation
         }))
       };
 
       const res = await fetch('/api/attempts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(requestPayload)
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Evaluation server error');
       
-      onQuizComplete(data.attemptId);
+      onQuizComplete(data.attemptId, data.testCode || testCode);
     } catch (err: any) {
       alert(`Submission error: ${err.message}`);
       setIsSubmitting(false);
@@ -261,6 +271,14 @@ export default function Quiz({
               Platform Assessment Paper
             </h2>
             <div className="flex flex-wrap items-center justify-center gap-4 text-xxs font-mono text-olive mt-3">
+              {testCode && (
+                <>
+                  <span className="bg-rust/10 text-rust font-bold px-2 py-0.5 rounded border border-rust/20">
+                    Test Code: {testCode}
+                  </span>
+                  <span>&bull;</span>
+                </>
+              )}
               <span>Syllabus: <span className="font-semibold text-ink">{topic?.syllabusUnit.split(':')[0]}</span></span>
               <span>&bull;</span>
               <span>Bloom's taxonomy: <span className="font-semibold text-ink uppercase">{bloomLevel}</span></span>

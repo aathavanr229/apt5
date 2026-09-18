@@ -9,9 +9,10 @@ import Result from './screens/Result.tsx';
 import Admin from './screens/Admin.tsx';
 import AuthGateScreen from './screens/AuthGateScreen.tsx';
 import LeaderboardScreen from './screens/LeaderboardScreen.tsx';
+import SpeedHandbookScreen from './screens/SpeedHandbookScreen.tsx';
 import StudentLoginModal, { StudentProfile } from './components/StudentLoginModal.tsx';
 
-type ScreenType = 'home' | 'topics' | 'topic-detail' | 'quiz' | 'result' | 'admin' | 'leaderboard';
+type ScreenType = 'home' | 'topics' | 'topic-detail' | 'quiz' | 'result' | 'admin' | 'leaderboard' | 'speed-handbook';
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenType>('home');
@@ -26,6 +27,7 @@ export default function App() {
   } | null>(null);
 
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
+  const [activeTestCode, setActiveTestCode] = useState<string | null>(null);
 
   // Student Authentication State
   const [student, setStudent] = useState<StudentProfile | null>(() => {
@@ -51,6 +53,7 @@ export default function App() {
     setStudent(null);
     try {
       localStorage.removeItem('aptitude_student');
+      localStorage.removeItem('aptitude_token');
     } catch (e) {
       console.error('Failed to clear student profile', e);
     }
@@ -85,8 +88,11 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleQuizComplete = (attemptId: string) => {
+  const handleQuizComplete = (attemptId: string, testCode?: string) => {
     setActiveAttemptId(attemptId);
+    if (testCode) {
+      setActiveTestCode(testCode);
+    }
     setScreen('result');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -104,6 +110,7 @@ export default function App() {
           <Home
             onSelectSubject={handleSelectSubject}
             onViewLeaderboard={() => setScreen('leaderboard')}
+            onViewHandbook={() => setScreen('speed-handbook')}
           />
         );
       case 'topics':
@@ -150,6 +157,17 @@ export default function App() {
         return (
           <LeaderboardScreen
             currentStudent={student}
+            initialTestCode={activeTestCode || undefined}
+            onBack={() => setScreen('home')}
+            onSelectTopic={(tId) => {
+              setSelectedTopicId(tId);
+              setScreen('topic-detail');
+            }}
+          />
+        );
+      case 'speed-handbook':
+        return (
+          <SpeedHandbookScreen
             onBack={() => setScreen('home')}
             onSelectTopic={(tId) => {
               setSelectedTopicId(tId);
@@ -160,7 +178,7 @@ export default function App() {
       case 'admin':
         return <Admin />;
       default:
-        return <Home onSelectSubject={handleSelectSubject} />;
+        return <Home onSelectSubject={handleSelectSubject} onViewHandbook={() => setScreen('speed-handbook')} />;
     }
   };
 

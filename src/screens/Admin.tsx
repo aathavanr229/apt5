@@ -24,6 +24,13 @@ export default function Admin() {
   const [importingBooks, setImportingBooks] = useState(false);
   const [importNotice, setImportNotice] = useState<string | null>(null);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('aptitude_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  };
+
   // Load Textbook Questions into verified pool
   const handleImportBooks = async () => {
     try {
@@ -31,7 +38,7 @@ export default function Admin() {
       setImportNotice(null);
       const res = await fetch('/api/books/import-all', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({})
       });
       const data = await res.json();
@@ -90,7 +97,10 @@ export default function Admin() {
   // Action handlers
   const handleApprove = async (id: string) => {
     try {
-      const res = await fetch(`/api/questions/approve/${id}`, { method: 'POST' });
+      const res = await fetch(`/api/questions/approve/${id}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Approve action failed');
       
       // Update local state
@@ -105,7 +115,10 @@ export default function Admin() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this question?')) return;
     try {
-      const res = await fetch(`/api/questions/delete/${id}`, { method: 'POST' });
+      const res = await fetch(`/api/questions/delete/${id}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Delete action failed');
       
       // Update local state
@@ -144,7 +157,7 @@ export default function Admin() {
 
       const res = await fetch(`/api/questions/edit/${editingQuestion.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 

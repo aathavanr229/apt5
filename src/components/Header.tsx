@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Trophy, FileSpreadsheet, GraduationCap, UserCheck } from 'lucide-react';
+import { BookOpen, Trophy, FileSpreadsheet, GraduationCap, UserCheck, Zap } from 'lucide-react';
 import { StudentProfile } from './StudentLoginModal';
 
 interface HeaderProps {
@@ -38,7 +38,7 @@ export default function Header({
           </div>
 
           {/* Navigation Links & Student Login */}
-          <nav className="flex items-center gap-2 sm:gap-3">
+          <nav className="flex items-center gap-1.5 sm:gap-2.5">
             <button
               onClick={() => onNavigate('home')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-sans font-medium transition-colors duration-200 cursor-pointer ${
@@ -49,6 +49,21 @@ export default function Header({
             >
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Courses</span>
+            </button>
+
+            {/* Speed Shortcuts Handbook */}
+            <button
+              onClick={() => onNavigate('speed-handbook')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-sans font-medium transition-colors duration-200 cursor-pointer ${
+                currentScreen === 'speed-handbook'
+                  ? 'text-rust bg-amber-50 border border-amber-300 shadow-xs'
+                  : 'text-ink/70 hover:text-ink hover:bg-cream/50'
+              }`}
+              title="Speed Mental Math & Fast Calculation Handbook (15 Chapters Complete)"
+            >
+              <Zap className="h-4 w-4 text-amber-600 fill-amber-500/20" />
+              <span className="hidden sm:inline">Speed Shortcuts</span>
+              <span className="sm:hidden">Shortcuts</span>
             </button>
 
             {/* Leaderboard & Rankings */}
