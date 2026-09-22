@@ -27,7 +27,7 @@ app.use(express.json());
 
 // Serverless / Development Lazy Database Connection Middleware (API calls only)
 app.use(async (req, _res, next) => {
-  if (req.path.startsWith('/api') && process.env.MONGODB_URI && !isDatabaseConnected()) {
+  if (req.path.startsWith('/api') && !isDatabaseConnected()) {
     try {
       await connectToDatabase();
     } catch {

@@ -256,6 +256,33 @@ export default function LeaderboardScreen({
         </div>
       </div>
 
+      {/* Active Filter Notice */}
+      {(testCodeFilter || selectedTopicId !== 'all' || selectedDepartment !== 'all') && (
+        <div className="mb-6 p-3.5 bg-amber-50/90 border border-amber-300 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs text-ink font-sans">
+            <Filter className="h-4 w-4 text-amber-700 shrink-0" />
+            <span>
+              Active Filter:{' '}
+              {testCodeFilter && <strong className="font-mono text-rust mr-2">Code: {testCodeFilter}</strong>}
+              {selectedTopicId !== 'all' && <span className="text-olive mr-2">Topic: {topics.find(t => t.id === selectedTopicId)?.name || selectedTopicId}</span>}
+              {selectedDepartment !== 'all' && <span className="text-olive">Dept: {selectedDepartment}</span>}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setTestCodeFilter('');
+              setSelectedTopicId('all');
+              setSelectedDepartment('all');
+              setTimeout(() => fetchLeaderboard(true), 50);
+            }}
+            className="text-xs font-semibold px-3 py-1 bg-paper border border-amber-300 text-amber-900 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors"
+          >
+            Clear Filters (Show All Results)
+          </button>
+        </div>
+      )}
+
       {/* Cohort Summary Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-paper border border-beige rounded-xl p-4 shadow-xs flex items-center gap-3">
@@ -544,6 +571,21 @@ export default function LeaderboardScreen({
             <p className="text-xs text-olive max-w-sm mx-auto mt-1">
               Be the first student to take this assessment and set the benchmark on the leaderboard!
             </p>
+            {(testCodeFilter || selectedTopicId !== 'all' || selectedDepartment !== 'all' || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTestCodeFilter('');
+                  setSelectedTopicId('all');
+                  setSelectedDepartment('all');
+                  setSearchQuery('');
+                  setTimeout(() => fetchLeaderboard(true), 50);
+                }}
+                className="mt-4 px-4 py-2 bg-rust text-paper text-xs font-semibold rounded-lg shadow-xs hover:bg-rust-dark transition-colors cursor-pointer"
+              >
+                Clear Filters &amp; Show All Cohort Scores
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

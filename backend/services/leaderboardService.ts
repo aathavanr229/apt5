@@ -89,7 +89,7 @@ export class LeaderboardService {
     // 3. Merge MongoDB & local store, deduplicating by attempt id
     const mergedMap = new Map<string, any>();
 
-    for (const att of (localAttempts as any[]).concat(mongoAttempts)) {
+    for (const att of (filteredLocal as any[]).concat(mongoAttempts)) {
       const attId = String(att._id || att.id || '');
       if (attId && !mergedMap.has(attId)) {
         mergedMap.set(attId, att);
@@ -106,7 +106,6 @@ export class LeaderboardService {
         att.studentRoll?.toLowerCase().includes('demo') ||
         att.studentName?.toLowerCase().includes('demo') ||
         att.testCode?.toLowerCase().includes('demo') ||
-        String(att._id || '').toLowerCase().includes('real-') ||
         String(att._id || '').toLowerCase().includes('demo')
       ) {
         continue;

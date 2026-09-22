@@ -22,12 +22,14 @@ if (!global.mongooseCache) {
 let lastErrorTime = 0;
 const RETRY_COOLDOWN_MS = 25000; // 25s cooldown between connection retries
 
+const DEFAULT_MONGODB_URI = "mongodb+srv://apt_forge:Cameraman8554@cluster0.gfomydg.mongodb.net/aptitude_forge?retryWrites=true&w=majority&appName=Cluster0";
+
 /**
  * Reusable cached MongoDB connection handler optimized for Vercel Serverless & local Node environments.
  * Prevents connection leakage and gracefully falls back without crashing the server.
  */
 export async function connectToDatabase(): Promise<typeof mongoose | null> {
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
   if (!uri) {
     return null;
   }

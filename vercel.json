@@ -2,6 +2,10 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "env": {
+    "MONGODB_URI": "mongodb+srv://apt_forge:Cameraman8554@cluster0.gfomydg.mongodb.net/aptitude_forge?retryWrites=true&w=majority&appName=Cluster0",
+    "JWT_SECRET": "aptitude_forge_jwt_secret_key_2026_super_secure_placement_portal"
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
