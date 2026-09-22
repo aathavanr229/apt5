@@ -112,12 +112,21 @@ export default function Quiz({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      const cleanName = studentName.trim() || student?.name || 'Candidate';
+      const cleanRoll = (studentRoll.trim() || student?.roll || 'CANDIDATE').toUpperCase();
+      const cleanDept = student?.department || 'Computer Science & Engineering';
+      const cleanEmail = student?.email || `${cleanRoll.toLowerCase()}@kongu.edu`;
+
       const requestPayload = {
         testCode: testCode || `APT-${topicId.toUpperCase()}-${Date.now().toString().slice(-4)}`,
         topicId,
         topicName: topic?.name || 'Aptitude Test',
+        subjectId: topic?.subjectId || 'subj-aptitude',
         bloomLevel,
-        studentRoll: student?.roll || studentRoll,
+        studentName: cleanName,
+        studentRoll: cleanRoll,
+        studentDepartment: cleanDept,
+        studentEmail: cleanEmail,
         timeTakenSeconds: elapsedSeconds,
         answers: questions.map((q) => ({
           questionId: q.id,

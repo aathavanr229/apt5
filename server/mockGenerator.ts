@@ -1,4 +1,5 @@
 import { Question } from '../src/types.js';
+import { TRAIN_PROBLEMS_100_BANK } from './trains100Data.js';
 
 // Helper to generate a random integer in a range [min, max]
 function randomInt(min: number, max: number): number {
@@ -844,18 +845,14 @@ export function generateMockQuestions(
       }
 
       case 'topic-trains': {
-        syllabusUnit = 'Unit III: Train Lengths, Platform Crossing, and Relative Motion';
-        learningOutcomes = 'Calculate train crossing times across poles and platforms.';
-        const length = pickRandom([120, 150, 180, 200, 240, 300]);
-        const speedKmph = pickRandom([36, 54, 72, 90, 108]);
-        const speedMs = speedKmph * (5 / 18);
-        const timeSec = parseFloat((length / speedMs).toFixed(1));
-        questionText = `A train of length ${length} meters is traveling at a constant speed of ${speedKmph} km/h. How many seconds will it take to cross a stationary signal post? (Variant #${idx + 1})`;
-        correctAnswer = `${timeSec} seconds`;
-        if (isMcq) {
-          options = [`${timeSec} seconds`, `${(timeSec + 3).toFixed(1)} seconds`, `${(timeSec - 2).toFixed(1)} seconds`, `${(timeSec * 1.5).toFixed(1)} seconds`].sort(() => Math.random() - 0.5);
-        }
-        explanation = `Speed in m/s = ${speedKmph} × 5/18 = ${speedMs} m/s. Time = Distance / Speed = ${length} / ${speedMs} = ${timeSec} seconds.`;
+        const trainQ = TRAIN_PROBLEMS_100_BANK[idx % TRAIN_PROBLEMS_100_BANK.length];
+        syllabusUnit = 'Unit III: Train Problems - 100 Questions Official Module';
+        learningOutcomes = 'Master all 10 rules of train relative velocity and time calculations.';
+        questionText = trainQ.questionText;
+        correctAnswer = trainQ.correctAnswer;
+        options = isMcq ? [...trainQ.options] : [];
+        explanation = trainQ.explanation;
+        bloomLevel = trainQ.bloomLevel;
         break;
       }
 
@@ -956,6 +953,232 @@ export function generateMockQuestions(
           options = [`+${shift} forward shift`, `+${shift + 1} forward shift`, `-${shift} reverse shift`, `+${shift * 2} position step`].sort(() => Math.random() - 0.5);
         }
         explanation = `Comparing each character in "${word}" to "${coded}" reveals a uniform forward shift of +${shift} in the English alphabet.`;
+        break;
+      }
+
+      case 'topic-seating-arrangement': {
+        syllabusUnit = 'Logical Reasoning Unit III: Linear Rows, Circular Tables (Inward/Outward Facing), and Multi-Attribute Puzzles';
+        learningOutcomes = 'Solve linear row arrangements, circular inward/outward seating rules, rank conversions, and multi-parameter placement constraints.';
+        const sub = (idx + attempts) % 4;
+        if (sub === 0) {
+          // Linear rank conversion
+          const total = pickRandom([30, 35, 40, 45, 50, 60]);
+          const leftRank = pickRandom([8, 12, 15, 18, 22]);
+          const rightRank = total - leftRank + 1;
+          const name = pickRandom(['Rohan', 'Priya', 'Karthik', 'Sneha', 'Arun', 'Divya']);
+          questionText = `In a single linear row of ${total} students facing North, ${name} ranks ${leftRank}th from the left extreme. What is ${name}'s position from the right extreme? (Variant #${idx + 1})`;
+          correctAnswer = `${rightRank}th`;
+          if (isMcq) {
+            options = [`${rightRank}th`, `${rightRank - 1}th`, `${rightRank + 1}th`, `${rightRank + 2}th`].sort(() => Math.random() - 0.5);
+          }
+          explanation = `Linear Rank Formula: Total = Left + Right - 1. Therefore, Right = Total - Left + 1 = ${total} - ${leftRank} + 1 = ${rightRank}th position.`;
+        } else if (sub === 1) {
+          // Linear row neighbor placement
+          const persons = ['Ananya', 'Bala', 'Charan', 'Deepak', 'Esha'];
+          questionText = `Five friends (${persons.join(', ')}) sit in a linear row facing North. Charan sits in the exact middle. Ananya sits to the immediate right of Charan. Deepak sits at the extreme left end. Who sits between Deepak and Charan? (Variant #${idx + 1})`;
+          correctAnswer = 'Bala';
+          if (isMcq) {
+            options = ['Bala', 'Esha', 'Ananya', 'Cannot be determined'].sort(() => Math.random() - 0.5);
+          }
+          explanation = `Order from left to right: Deepak (extreme left, 1st) -> Bala (2nd) -> Charan (3rd, middle) -> Ananya (4th) -> Esha (5th, extreme right). Hence, Bala sits between Deepak and Charan.`;
+        } else if (sub === 2) {
+          // Circular inward facing
+          questionText = `Six professionals (P, Q, R, S, T, U) sit around a circular conference table facing the center. P sits directly opposite to S. Q sits to the immediate right of P. R sits to the immediate left of P. Who sits directly opposite to Q? (Variant #${idx + 1})`;
+          correctAnswer = 'T';
+          if (isMcq) {
+            options = ['T', 'U', 'R', 'S'].sort(() => Math.random() - 0.5);
+          }
+          explanation = `In a 6-seat circle facing inward, opposite seats have an offset of 3 positions. With P at 12 o'clock and S at 6 o'clock: Q is at 2 o'clock, so the person opposite Q (8 o'clock) must be T (with U at 10 o'clock opposite R at 4 o'clock).`;
+        } else {
+          // Position swap linear row
+          const p1 = 'Varun';
+          const p2 = 'Manoj';
+          const r1 = 8;
+          const r2 = 14;
+          const r1New = 24;
+          const totalPeople = r1New + r2 - 1;
+          questionText = `In a row of candidates facing North, ${p1} is ${r1}th from the left and ${p2} is ${r2}th from the right. If they interchange their seats, ${p1} becomes ${r1New}th from the left. How many candidates are in the row? (Variant #${idx + 1})`;
+          correctAnswer = `${totalPeople}`;
+          if (isMcq) {
+            options = [`${totalPeople}`, `${totalPeople - 2}`, `${totalPeople + 1}`, `${totalPeople + 3}`].sort(() => Math.random() - 0.5);
+          }
+          explanation = `After interchange, ${p1}'s new position corresponds to ${p2}'s original place. Total candidates = (${p1}'s new rank from left) + (${p2}'s rank from right) - 1 = ${r1New} + ${r2} - 1 = ${totalPeople}.`;
+        }
+        break;
+      }
+
+      case 'topic-syllogisms': {
+        syllabusUnit = 'Logical Reasoning Unit II: Deductive Logic, Categorical Propositions, and Euler-Venn Analysis';
+        learningOutcomes = 'Validate deductive syllogisms, apply 100/50 term distribution rules, and identify logically necessary conclusions.';
+        const sylCases = [
+          {
+            q: 'Statements: All laptops are electronic devices. All electronic devices are machines. Conclusions: I. All laptops are machines. II. Some machines are electronic devices.',
+            a: 'Both conclusions I and II follow',
+            opts: ['Both conclusions I and II follow', 'Only conclusion I follows', 'Only conclusion II follows', 'Neither conclusion follows'],
+            exp: 'Since All A are B and All B are C, All A are C is valid (Conclusion I). Also, All B are C implies Some C are B (Conclusion II).'
+          },
+          {
+            q: 'Statements: Some metals are conductors. All conductors are solids. Conclusions: I. Some solids are metals. II. No metal is a solid.',
+            a: 'Only conclusion I follows',
+            opts: ['Only conclusion I follows', 'Only conclusion II follows', 'Both follow', 'Neither follows'],
+            exp: 'Intersection of metals and conductors falls inside solids, so some solids must be metals. Conclusion II directly contradicts this positive overlap.'
+          },
+          {
+            q: 'Statements: All scientists are thinkers. No thinker is superstitious. Conclusions: I. No scientist is superstitious. II. Some thinkers are scientists.',
+            a: 'Both conclusions I and II follow',
+            opts: ['Both conclusions I and II follow', 'Only conclusion I follows', 'Only conclusion II follows', 'Neither follows'],
+            exp: 'Universal affirmative followed by universal negative: Scientists are entirely contained in Thinkers, which is disjoint from Superstitious. Both conclusions are valid.'
+          }
+        ];
+        const sc = pickRandom(sylCases);
+        questionText = `${sc.q} (Variant #${idx + 1})`;
+        correctAnswer = sc.a;
+        if (isMcq) {
+          options = [...sc.opts].sort(() => Math.random() - 0.5);
+        }
+        explanation = sc.exp;
+        break;
+      }
+
+      case 'topic-mensuration': {
+        syllabusUnit = 'Unit VI: 2D Areas, Perimeters, and 3D Volumes & Surface Areas';
+        learningOutcomes = 'Calculate surface areas, volume conversions, diagonals, and perimeter equations for 2D and 3D solids.';
+        const mSub = (idx + attempts) % 3;
+        if (mSub === 0) {
+          // Circle area from circumference
+          const r = pickRandom([7, 14, 21, 28]);
+          const circ = 2 * (22 / 7) * r;
+          const area = (22 / 7) * r * r;
+          questionText = `The circumference of a circular water reservoir is ${circ} meters. What is the surface area of the reservoir? (Take π = 22/7, Variant #${idx + 1})`;
+          correctAnswer = `${area} sq m`;
+          if (isMcq) {
+            options = [`${area} sq m`, `${area + 44} sq m`, `${area - 32} sq m`, `${area * 1.25} sq m`].sort(() => Math.random() - 0.5);
+          }
+          explanation = `Circumference = 2πr = ${circ} m => r = (${circ} × 7) / 44 = ${r} m. Area = πr² = (22/7) × ${r} × ${r} = ${area} sq m.`;
+        } else if (mSub === 1) {
+          // Melting sphere into smaller spheres
+          const R = pickRandom([6, 9, 12]);
+          const rSmall = 3;
+          const countSpheres = Math.round(Math.pow(R / rSmall, 3));
+          questionText = `A solid metallic sphere of radius ${R} cm is melted and recast into small uniform spheres of radius ${rSmall} cm each. How many small spheres can be formed? (Variant #${idx + 1})`;
+          correctAnswer = `${countSpheres}`;
+          if (isMcq) {
+            options = [`${countSpheres}`, `${countSpheres - 4}`, `${countSpheres + 8}`, `${countSpheres * 2}`].sort(() => Math.random() - 0.5);
+          }
+          explanation = `Volume is conserved: n × (4/3)πr³ = (4/3)πR³ => n = (R / r)³ = (${R} / ${rSmall})³ = ${R / rSmall}³ = ${countSpheres}.`;
+        } else {
+          // Rectangle perimeter and area
+          const l = pickRandom([15, 20, 25, 30]);
+          const b = pickRandom([8, 10, 12, 16]);
+          const area = l * b;
+          const peri = 2 * (l + b);
+          questionText = `A rectangular hall has a perimeter of ${peri} m and its length is ${l} m. What is the floor area of the hall in square meters? (Variant #${idx + 1})`;
+          correctAnswer = `${area} sq m`;
+          if (isMcq) {
+            options = [`${area} sq m`, `${area + 20} sq m`, `${area - 15} sq m`, `${(peri * 2)} sq m`].sort(() => Math.random() - 0.5);
+          }
+          explanation = `Perimeter = 2(l + b) = ${peri} => l + b = ${peri / 2}. Since l = ${l}, breadth b = ${peri / 2} - ${l} = ${b} m. Floor Area = l × b = ${l} × ${b} = ${area} sq m.`;
+        }
+        break;
+      }
+
+      case 'topic-data-interpretation': {
+        syllabusUnit = 'Unit VII: Tabular Analysis, Bar Charts, Pie Charts, and Ratio Comparisons';
+        learningOutcomes = 'Extract quantitative metrics from charts, evaluate growth rates, and synthesize data matrices.';
+        const q1 = pickRandom([40, 50, 60]);
+        const q4 = q1 + pickRandom([20, 30, 40]);
+        const pctGrowth = parseFloat((((q4 - q1) / q1) * 100).toFixed(1));
+        questionText = `A technology division recorded quarterly revenues: Q1 = ₹${q1} Lakhs, Q2 = ₹${q1 + 10} Lakhs, Q3 = ₹${q1 + 15} Lakhs, and Q4 = ₹${q4} Lakhs. What is the percentage growth in revenue from Q1 to Q4? (Variant #${idx + 1})`;
+        correctAnswer = `${pctGrowth}%`;
+        if (isMcq) {
+          options = [`${pctGrowth}%`, `${(pctGrowth - 5.5).toFixed(1)}%`, `${(pctGrowth + 6.2).toFixed(1)}%`, `${(pctGrowth * 0.8).toFixed(1)}%`].sort(() => Math.random() - 0.5);
+        }
+        explanation = `Percentage Growth = ((Q4 Revenue - Q1 Revenue) / Q1 Revenue) × 100 = ((${q4} - ${q1}) / ${q1}) × 100 = (${q4 - q1} / ${q1}) × 100 = ${pctGrowth}%.`;
+        break;
+      }
+
+      case 'topic-sentence-correction': {
+        syllabusUnit = 'Verbal Ability Unit I: Subject-Verb Agreement, Modifier Errors, and Syntactic Structure';
+        learningOutcomes = 'Identify syntactic anomalies, correct grammatical errors, and select idiomatically sound constructions.';
+        const verbalItems = [
+          {
+            q: 'Identify the sentence with the correct subject-verb agreement:',
+            a: 'Neither the principal nor the teachers were present at the auditorium.',
+            opts: [
+              'Neither the principal nor the teachers were present at the auditorium.',
+              'Neither the principal nor the teachers was present at the auditorium.',
+              'Neither the principal nor the teachers is present at the auditorium.',
+              'Neither the principal nor the teachers has been present at the auditorium.'
+            ],
+            exp: 'Rule of Proximity: In "Neither... nor..." constructions, the verb agrees in number with the nearer subject ("teachers" is plural, hence "were").'
+          },
+          {
+            q: 'Choose the grammatically correct sentence:',
+            a: 'If he had arrived on time, he would have caught the morning express.',
+            opts: [
+              'If he had arrived on time, he would have caught the morning express.',
+              'If he would have arrived on time, he would have caught the morning express.',
+              'If he arrived on time, he would have catch the morning express.',
+              'If he had arrived on time, he will have caught the morning express.'
+            ],
+            exp: 'Third Conditional Rule: In past unreal conditions, use "If + past perfect" in the conditional clause and "would have + past participle" in the main result clause.'
+          },
+          {
+            q: 'Select the option that fixes the misplaced modifier in: "Walking towards the campus, the solar laboratory impressed the delegates."',
+            a: 'Walking towards the campus, the delegates were impressed by the solar laboratory.',
+            opts: [
+              'Walking towards the campus, the delegates were impressed by the solar laboratory.',
+              'Walking towards the campus, the solar laboratory was impressing the delegates.',
+              'The solar laboratory walking towards the campus impressed the delegates.',
+              'While walking towards the campus, the solar laboratory gave impression to the delegates.'
+            ],
+            exp: 'The introductory participial phrase "Walking towards the campus" must logically modify the subject that follows ("the delegates", not the inanimate laboratory).'
+          }
+        ];
+        const vItem = pickRandom(verbalItems);
+        questionText = `${vItem.q} (Variant #${idx + 1})`;
+        correctAnswer = vItem.a;
+        if (isMcq) {
+          options = [...vItem.opts].sort(() => Math.random() - 0.5);
+        }
+        explanation = vItem.exp;
+        break;
+      }
+
+      case 'topic-reading-comprehension': {
+        syllabusUnit = 'Verbal Ability Unit II: Analytical Reading Stamina, Inference Synthesis, and Passage Deconstruction';
+        learningOutcomes = 'Extract core thesis from dense technical prose, infer authorial intent, and deduce contextual vocabulary.';
+        const rcItems = [
+          {
+            q: 'Passage: "Autonomous algorithmic trading systems execute financial decisions in sub-millisecond intervals. While proponents argue that automated liquidity improves market efficiency, critics caution that cascading positive feedback loops can trigger flash crashes without human deliberation."\n\nQuestion: According to the passage, what is the primary risk posed by algorithmic trading?',
+            a: 'Uncontrolled positive feedback loops causing rapid market flash crashes',
+            opts: [
+              'Uncontrolled positive feedback loops causing rapid market flash crashes',
+              'A complete depletion of overall market financial liquidity',
+              'Slower financial transaction execution times compared to humans',
+              'Excessive human intervention during critical market volatility'
+            ],
+            exp: 'The passage explicitly states that critics caution that cascading positive feedback loops can trigger flash crashes without human deliberation.'
+          },
+          {
+            q: 'Passage: "Edge computing shifts computational workloads from centralized cloud clusters directly to local embedded microcontrollers. This architecture dramatically cuts network latency and conserves bandwidth, which is essential for mission-critical robotics and self-driving vehicles."\n\nQuestion: What is the primary operational advantage of edge computing highlighted in the text?',
+            a: 'Substantial reduction in network latency and bandwidth preservation',
+            opts: [
+              'Substantial reduction in network latency and bandwidth preservation',
+              'Elimination of local on-device hardware components',
+              'Centralizing all data strictly in remote cloud server farms',
+              'Decreasing the speed of robotic sensor feedback loops'
+            ],
+            exp: 'The text directly mentions that shifting computation to local edge nodes dramatically cuts network latency and conserves bandwidth.'
+          }
+        ];
+        const rcItem = pickRandom(rcItems);
+        questionText = `${rcItem.q} (Variant #${idx + 1})`;
+        correctAnswer = rcItem.a;
+        if (isMcq) {
+          options = [...rcItem.opts].sort(() => Math.random() - 0.5);
+        }
+        explanation = rcItem.exp;
         break;
       }
 

@@ -1,4 +1,5 @@
 import { Attempt, IAttempt } from '../models/Attempt.js';
+import { db } from '../../server/db.js';
 
 export interface LeaderboardFilter {
   testCode?: string;
@@ -35,8 +36,8 @@ export interface LeaderboardResponse {
 
 export class LeaderboardService {
   /**
-   * Retrieves live, database-backed rankings from MongoDB.
-   * Eliminates all mock/hardcoded students and delivers real cohort rankings.
+   * Retrieves live, database-backed rankings from MongoDB & persistent storage.
+   * Delivers authentic, real-time cohort rankings sorted strictly by marks and speed.
    */
   static async getLeaderboard(filter: LeaderboardFilter): Promise<LeaderboardResponse> {
     const query: any = {};
@@ -57,15 +58,50 @@ export class LeaderboardService {
       query.studentDepartment = filter.department.trim();
     }
 
-    // Retrieve all attempts matching criteria
-    const rawAttempts: IAttempt[] = await Attempt.find(query)
-      .sort({ percentage: -1, score: -1, timeTakenSeconds: 1, submittedAt: 1 })
-      .lean();
+    // 1. Retrieve all attempts matching criteria from MongoDB (with safe error handling)
+    let mongoAttempts: any[] = [];
+    try {
+      mongoAttempts = await Attempt.find(query)
+        .sort({ percentage: -1, score: -1, timeTakenSeconds: 1, submittedAt: 1 })
+        .lean();
+    } catch (e) {
+      console.warn('Notice: MongoDB attempt retrieval skipped in dual engine:', e);
+    }
 
-    // Deduplicate: Best attempt per student per testCode/topic
+    // 2. Retrieve matching attempts from local database store
+    const localAttempts = db.getAttempts() || [];
+    const filteredLocal = localAttempts.filter((att: any) => {
+      if (filter.testCode && filter.testCode !== 'all') {
+        if (String(att.testCode || '').toUpperCase() !== filter.testCode.trim().toUpperCase()) return false;
+      }
+      if (filter.topicId && filter.topicId !== 'all') {
+        if (att.topicId !== filter.topicId.trim()) return false;
+      }
+      if (filter.subjectId && filter.subjectId !== 'all') {
+        if (att.subjectId !== filter.subjectId.trim()) return false;
+      }
+      if (filter.department && filter.department !== 'all') {
+        if (att.studentDepartment !== filter.department.trim()) return false;
+      }
+      return true;
+    });
+
+    // 3. Merge MongoDB & local store, deduplicating by attempt id
+    const mergedMap = new Map<string, any>();
+
+    for (const att of (localAttempts as any[]).concat(mongoAttempts)) {
+      const attId = String(att._id || att.id || '');
+      if (attId && !mergedMap.has(attId)) {
+        mergedMap.set(attId, att);
+      }
+    }
+
+    const allCombined = Array.from(mergedMap.values());
+
+    // 4. Deduplicate: Best attempt per student per testCode or topic
     const bestAttemptMap = new Map<string, any>();
 
-    for (const att of rawAttempts) {
+    for (const att of allCombined) {
       if (
         att.studentRoll?.toLowerCase().includes('demo') ||
         att.studentName?.toLowerCase().includes('demo') ||
@@ -75,12 +111,13 @@ export class LeaderboardService {
       ) {
         continue;
       }
-      // Keyed by student roll and test/topic
-      const scopeKey = filter.testCode ? att.testCode : att.topicId;
-      const key = `${att.studentRoll}-${scopeKey}`;
+      // Keyed by student roll and testCode/topic
+      const scopeKey = filter.testCode ? String(att.testCode || '').toUpperCase() : (att.topicId || 'general');
+      const studentKey = String(att.studentRoll || '').trim().toUpperCase();
+      const key = `${studentKey}-${scopeKey}`;
 
-      const existing = bestAttemptMap.get(key);
       const attPct = att.percentage ?? Math.round((att.score / Math.max(1, att.total)) * 100);
+      const existing = bestAttemptMap.get(key);
 
       if (!existing) {
         bestAttemptMap.set(key, { ...att, percentage: attPct });
@@ -88,6 +125,7 @@ export class LeaderboardService {
         const existPct = existing.percentage ?? Math.round((existing.score / Math.max(1, existing.total)) * 100);
         if (
           attPct > existPct ||
+          (attPct === existPct && (att.score || 0) > (existing.score || 0)) ||
           (attPct === existPct && (att.timeTakenSeconds || 9999) < (existing.timeTakenSeconds || 9999))
         ) {
           bestAttemptMap.set(key, { ...att, percentage: attPct });
@@ -97,14 +135,18 @@ export class LeaderboardService {
 
     const uniqueAttempts = Array.from(bestAttemptMap.values());
 
-    // Deterministic sort: Percentage DESC, Score DESC, Time Taken ASC, Date ASC
+    // 5. Deterministic Cohort Ranking Sort:
+    // 1st: Percentage DESC (Marks)
+    // 2nd: Raw Score DESC
+    // 3rd: Time Taken ASC (Speed tie-breaker)
+    // 4th: Submitted Date ASC
     uniqueAttempts.sort((a, b) => {
       if (b.percentage !== a.percentage) return b.percentage - a.percentage;
       if (b.score !== a.score) return b.score - a.score;
       const timeA = a.timeTakenSeconds || 300;
       const timeB = b.timeTakenSeconds || 300;
       if (timeA !== timeB) return timeA - timeB;
-      return new Date(a.submittedAt || a.createdAt).getTime() - new Date(b.submittedAt || b.createdAt).getTime();
+      return new Date(a.submittedAt || a.createdAt || 0).getTime() - new Date(b.submittedAt || b.createdAt || 0).getTime();
     });
 
     const entries = uniqueAttempts.map((a, index) => ({
@@ -122,7 +164,13 @@ export class LeaderboardService {
       total: a.total,
       percentage: a.percentage,
       timeTakenSeconds: a.timeTakenSeconds || 0,
-      createdAt: (a.submittedAt || a.createdAt || new Date()).toISOString(),
+      createdAt: typeof a.submittedAt === 'object' && a.submittedAt?.toISOString
+        ? a.submittedAt.toISOString()
+        : typeof a.createdAt === 'string'
+        ? a.createdAt
+        : a.createdAt?.toISOString
+        ? a.createdAt.toISOString()
+        : new Date().toISOString(),
     }));
 
     const totalAttended = entries.length;

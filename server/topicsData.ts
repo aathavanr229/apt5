@@ -325,36 +325,92 @@ export const COMPREHENSIVE_TOPICS: Topic[] = [
   {
     id: 'topic-trains',
     subjectId: 'subj-aptitude',
-    name: 'Problems on Trains',
+    name: 'Problems on Trains (100 Questions Official Module)',
     category: 'quantitative',
-    syllabusUnit: 'Unit III: Train Lengths, Platform Crossing, and Opposite Directions',
-    learningOutcomes: 'Calculate time taken to cross stationary objects vs moving trains, and account for combined body lengths.',
-    summary: 'Application of relative motion where the physical length of the moving train (and platform/bridge) must be added to the traversed distance.',
+    syllabusUnit: 'Unit III: Train Problems - Official 100 Questions Bank across 10 Rules',
+    learningOutcomes: 'Master all 10 standard rules of train problems: Unit Conversions, Point Objects, Extended Objects, Train & Moving Person, Two Trains, Man Inside Train, Meeting Point Formula, and Stoppages Exclusion.',
+    summary: 'Official 100-question comprehensive numerical module. Live assessments draw strictly from this verified 100-question PDF repository with exact formulas, options, and step-by-step solutions.',
     formulas: [
       {
-        name: 'Crossing a Pole / Man (Point Object)',
+        name: 'Rule 1: Unit Conversion (km/h <-> m/s)',
+        formula: 'S (m/s) = S (km/h) × (5 / 18) | S (km/h) = S (m/s) × (18 / 5)',
+        note: 'Every 18 km/h equals exactly 5 m/s (e.g. 54 km/h = 15 m/s, 72 km/h = 20 m/s, 90 km/h = 25 m/s, 108 km/h = 30 m/s).'
+      },
+      {
+        name: 'Rule 2: Crossing Stationary Point Object (Pole / Tree / Standing Person)',
         formula: 'Time = Length_Train / Speed',
-        note: 'Point object has zero length.'
+        note: 'Point objects have negligible length (Length = 0).'
       },
       {
-        name: 'Crossing Platform / Bridge / Tunnel',
+        name: 'Rule 3: Crossing Extended Stationary Object (Platform / Bridge / Tunnel)',
         formula: 'Time = (Length_Train + Length_Platform) / Speed',
-        note: 'Both lengths must be summed.'
+        note: 'Total distance traversed is the sum of train length and platform length.'
       },
       {
-        name: 'Two Trains Crossing Each Other',
-        formula: 'Time = (L1 + L2) / (S1 ± S2)',
-        note: 'Use (+) if opposite directions, (-) if same direction.'
+        name: 'Rule 4: Train & Moving Person (Same Direction)',
+        formula: 'Relative Speed = Speed_Train - Speed_Person | Time = Length_Train / Relative_Speed',
+        note: 'Speeds subtract when moving in the same direction.'
+      },
+      {
+        name: 'Rule 5: Train & Moving Person (Opposite Direction)',
+        formula: 'Relative Speed = Speed_Train + Speed_Person | Time = Length_Train / Relative_Speed',
+        note: 'Speeds add when moving in opposite directions.'
+      },
+      {
+        name: 'Rule 6: Two Trains Moving in Opposite Directions',
+        formula: 'Time = (Length_1 + Length_2) / (Speed_1 + Speed_2)',
+        note: 'Total distance is Length_1 + Length_2; speeds add.'
+      },
+      {
+        name: 'Rule 7: Two Trains Moving in Same Direction (Overtaking)',
+        formula: 'Time = (Length_1 + Length_2) / (Speed_1 - Speed_2)',
+        note: 'Total distance is Length_1 + Length_2; faster speed minus slower speed.'
+      },
+      {
+        name: 'Rule 8: Man Sitting Inside a Moving Train',
+        formula: 'Time = Length_Passing_Train / (Speed_1 ± Speed_2)',
+        note: 'Distance is ONLY the length of the passing/overtaking train, NOT both trains!'
+      },
+      {
+        name: 'Rule 9: Meeting Point Ratio Formula',
+        formula: 'Speed_A / Speed_B = √(Time_B / Time_A)',
+        note: 'When two trains start simultaneously from A & B towards each other, after crossing their speeds are inversely proportional to square root of times.'
+      },
+      {
+        name: 'Rule 10: Stoppages Exclusion Formula',
+        formula: 'Stoppage Time (min/hr) = [(Speed_Without_Stoppage - Speed_With_Stoppage) / Speed_Without_Stoppage] × 60',
+        note: 'Drop in average speed directly yields idle halt time per hour.'
       }
     ],
-    formulaCount: 3,
+    formulaCount: 10,
     speedShortcuts: [
       {
-        method: 'Summed Distances Direct Division',
-        title: 'Total Length over Relative m/s Speed',
-        rule: 'Always convert speeds to m/s first using the 18:5 ladder, then divide total meters by total m/s in one line.',
-        example: 'A 150m train at 54 km/h crosses a 100m platform. 54 km/h = 15 m/s. Total distance = 150 + 100 = 250m. Time = 250 / 15 = 16.67 seconds.',
-        mentalStep: 'Add lengths in head (250), convert 54 km/h to 15 m/s instantly, 250 / 15 = 50/3 = 16.67s.'
+        method: '18:5 Ratio Ladder',
+        title: 'Instant km/h to m/s Mental Conversion',
+        rule: 'Divide km/h by 18 and multiply by 5. 36->10, 54->15, 72->20, 90->25, 108->30.',
+        example: '90 km/h = (90/18)*5 = 25 m/s. 250m train crosses pole in 250/25 = 10s.',
+        mentalStep: 'Identify multiple of 18: 90 is 5×18, so speed is 5×5 = 25 m/s.'
+      },
+      {
+        method: 'Passenger Object Exclusion',
+        title: 'Man in Train Only Uses Crossing Train Length',
+        rule: 'Do not sum both train lengths when finding time to pass a passenger sitting inside. Use ONLY the length of the train that is passing the passenger.',
+        example: 'A 180m train at 75 km/h passes a man in a 250m train at 33 km/h opposite. Distance = 180m (not 430m!). Rel Speed = 75+33 = 108 km/h = 30 m/s. Time = 180/30 = 6s.',
+        mentalStep: 'Passenger is a point object. Distance = 180m. Relative Speed = 108 km/h = 30 m/s. 180/30 = 6s.'
+      },
+      {
+        method: 'Square Root Inverse Time Ratio',
+        title: 'Post-Meeting Speed Determination',
+        rule: 'Speed ratio is square root of inverse time ratio: Sa / Sb = √(Tb / Ta).',
+        example: 'Trains take 9h and 16h after meeting. Sa / Sb = √(16 / 9) = 4 : 3.',
+        mentalStep: 'Swap the times (16/9), take square root -> 4/3.'
+      },
+      {
+        method: 'Stoppage Minute Factor',
+        title: 'Difference over Original times 60',
+        rule: 'Stoppage min/hr = (Diff in Speeds / Fast Speed) × 60.',
+        example: '50 km/h without, 40 km/h with. Diff = 10. (10/50)*60 = 12 mins/hr.',
+        mentalStep: '10/50 is 1/5th of an hour. 60/5 = 12 minutes.'
       }
     ]
   },

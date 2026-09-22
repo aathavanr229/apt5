@@ -48,9 +48,17 @@ export default function LeaderboardScreen({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'all' | 'top' | 'mine'>('all');
   const [loading, setLoading] = useState<boolean>(true);
+  const [liveSync, setLiveSync] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
-  const fetchLeaderboard = async () => {
-    setLoading(true);
+  const fetchLeaderboard = async (showFullLoading = false) => {
+    if (showFullLoading) {
+      setLoading(true);
+    } else {
+      setIsSyncing(true);
+    }
+
     try {
       const params = new URLSearchParams();
       if (selectedTopicId && selectedTopicId !== 'all') {
@@ -76,11 +84,15 @@ export default function LeaderboardScreen({
           topPercentage: 0,
           passPercentage: 0
         });
+        setLastSyncTime(new Date());
       }
     } catch (err) {
       console.error('Error loading leaderboard:', err);
     } finally {
-      setLoading(false);
+      if (showFullLoading) {
+        setLoading(false);
+      }
+      setIsSyncing(false);
     }
   };
 
@@ -98,8 +110,17 @@ export default function LeaderboardScreen({
   }, []);
 
   useEffect(() => {
-    fetchLeaderboard();
-  }, [selectedTopicId, selectedDepartment]);
+    fetchLeaderboard(true);
+  }, [selectedTopicId, selectedDepartment, testCodeFilter]);
+
+  // Real-time automatic polling every 5 seconds for concurrent test-takers
+  useEffect(() => {
+    if (!liveSync) return;
+    const timer = setInterval(() => {
+      fetchLeaderboard(false);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [liveSync, selectedTopicId, selectedDepartment, testCodeFilter]);
 
   // Filter entries based on search query and active tab
   const filteredEntries = entries.filter((e: any) => {
@@ -197,16 +218,33 @@ export default function LeaderboardScreen({
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
+        {/* Action buttons and Live Sync controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Live Sync Badge */}
           <button
-            onClick={fetchLeaderboard}
+            type="button"
+            onClick={() => setLiveSync(!liveSync)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xxs font-mono font-semibold transition-all cursor-pointer ${
+              liveSync
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : 'bg-cream/60 border-beige text-olive hover:text-ink'
+            }`}
+            title={liveSync ? 'Click to pause automatic 5s live sync' : 'Click to resume 5s live sync'}
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${liveSync ? 'bg-emerald-500 animate-ping' : 'bg-olive/40'}`}></span>
+            <span>{liveSync ? 'Live Sync Active (5s)' : 'Live Sync Paused'}</span>
+            {isSyncing && <RefreshCw className="h-2.5 w-2.5 text-emerald-600 animate-spin ml-0.5" />}
+          </button>
+
+          <button
+            onClick={() => fetchLeaderboard(true)}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-paper border border-beige hover:bg-cream rounded-lg text-ink transition-colors cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 text-rust ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
+
           <button
             onClick={handleExportCSV}
             disabled={filteredEntries.length === 0}

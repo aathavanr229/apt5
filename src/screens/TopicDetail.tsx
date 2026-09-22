@@ -301,6 +301,22 @@ export default function TopicDetail({ topicId, onGeneratePaper, onBack }: TopicD
                 </h3>
               </div>
 
+              {topicId === 'topic-trains' && (
+                <div className="mb-5 p-3.5 bg-gradient-to-br from-amber-50 to-orange-50/70 border-2 border-amber-300 rounded-xl shadow-2xs">
+                  <div className="flex items-start gap-2.5">
+                    <Zap className="h-4 w-4 text-amber-600 fill-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-serif font-bold text-ink">
+                        Official 100-Question PDF Module Active
+                      </p>
+                      <p className="text-xxs text-olive mt-0.5 leading-relaxed">
+                        Questions for this test are drawn <strong>strictly and exclusively</strong> from the verified 10-rule PDF test bank. Select any question count below (5 to 100).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Form elements */}
               <div className="space-y-6">
                 {/* Bloom's taxonomy combinations */}

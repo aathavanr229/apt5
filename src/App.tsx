@@ -111,6 +111,7 @@ export default function App() {
             onSelectSubject={handleSelectSubject}
             onViewLeaderboard={() => setScreen('leaderboard')}
             onViewHandbook={() => setScreen('speed-handbook')}
+            onSelectTopic={handleSelectTopic}
           />
         );
       case 'topics':

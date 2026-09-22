@@ -144,4 +144,35 @@ router.post('/questions/generate', optionalAuth, async (req: AuthenticatedReques
   }
 });
 
+// GET /api/trains-module
+router.get('/trains-module', async (req, res) => {
+  try {
+    const { rule } = req.query;
+    const { TRAIN_PROBLEMS_100_BANK, getTrainQuestionsByRule } = await import('../../server/trains100Data.js');
+    let questions = TRAIN_PROBLEMS_100_BANK;
+    if (rule) {
+      questions = getTrainQuestionsByRule(Number(rule));
+    }
+    res.json({
+      title: 'Aptitude Test Bank: Train Problems - 100 Comprehensive Numerical Questions across 10 Rules',
+      total: questions.length,
+      rules: [
+        { ruleNum: 1, title: 'Unit Conversions (km/h <-> m/s)', count: 10 },
+        { ruleNum: 2, title: 'Crossing Stationary Point Objects (Pole / Tree / Person)', count: 10 },
+        { ruleNum: 3, title: 'Crossing Extended Stationary Objects (Platform / Bridge / Tunnel)', count: 10 },
+        { ruleNum: 4, title: 'Train & Moving Person (Same Direction)', count: 10 },
+        { ruleNum: 5, title: 'Train & Moving Person (Opposite Direction)', count: 10 },
+        { ruleNum: 6, title: 'Two Trains Moving in Opposite Directions', count: 10 },
+        { ruleNum: 7, title: 'Two Trains Moving in Same Direction (Overtaking)', count: 10 },
+        { ruleNum: 8, title: 'Man Sitting Inside a Moving Train', count: 10 },
+        { ruleNum: 9, title: 'Meeting Point Ratio Formula [Sa/Sb = √(Tb/Ta)]', count: 10 },
+        { ruleNum: 10, title: 'Stoppages Exclusion Formula', count: 10 },
+      ],
+      questions,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

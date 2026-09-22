@@ -7,9 +7,10 @@ interface HomeProps {
   onSelectSubject: (id: string) => void;
   onViewLeaderboard?: () => void;
   onViewHandbook?: () => void;
+  onSelectTopic?: (topicId: string) => void;
 }
 
-export default function Home({ onSelectSubject, onViewLeaderboard, onViewHandbook }: HomeProps) {
+export default function Home({ onSelectSubject, onViewLeaderboard, onViewHandbook, onSelectTopic }: HomeProps) {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,6 +134,45 @@ export default function Home({ onSelectSubject, onViewLeaderboard, onViewHandboo
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Official 100-Question PDF Bank Live Exam Banner */}
+      <div className="mb-6 bg-gradient-to-r from-red-950 via-neutral-900 to-amber-950 border-2 border-rust text-paper rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-rust/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="flex items-start gap-4 z-10">
+          <div className="p-3.5 bg-rust/30 text-amber-300 rounded-xl border border-rust/50 shrink-0">
+            <Zap className="h-7 w-7 text-amber-400 fill-amber-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full text-xxs font-bold uppercase tracking-wider bg-rust text-paper border border-rust/30 shadow-2xs">
+                🔥 Live Test Module
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xxs font-mono font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                100 Questions PDF Bank
+              </span>
+              <span className="text-xxs font-mono text-paper/70">
+                Official Placement Exam
+              </span>
+            </div>
+            <h3 className="font-serif text-xl font-bold text-paper mt-1.5">
+              Problems on Trains — Official 100-Question Assessment Module
+            </h3>
+            <p className="text-xs text-paper/80 mt-1 leading-relaxed max-w-2xl">
+              Strictly draws questions from the verified 10-rule PDF curriculum. Choose any custom question count (5, 10, 20, 50, or full 100) with real-time scoring, live leaderboard ranking, and step-by-step mathematical derivations.
+            </p>
+          </div>
+        </div>
+
+        {onSelectTopic && (
+          <button
+            onClick={() => onSelectTopic('topic-trains')}
+            className="z-10 shrink-0 flex items-center gap-2 px-5 py-3 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs rounded-xl shadow-lg transition-all transform hover:scale-105 cursor-pointer"
+          >
+            <span>Launch Train Problems Test</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Multi-User Assessment & Live Leaderboard Banner */}

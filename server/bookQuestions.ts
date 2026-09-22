@@ -1,4 +1,5 @@
 import { Question } from '../src/types.js';
+import { TRAIN_PROBLEMS_100_BANK } from './trains100Data.js';
 
 export interface BookQuestionSource {
   bookTitle: string;
@@ -437,6 +438,93 @@ export const BOOK_QUESTION_REPOSITORIES: BookQuestionSource[] = [
         bookRef: 'R.S. Aggarwal, Ch. 31, Coins Sample Space'
       }
     ]
+  },
+
+  // 11. Seating Arrangement & Puzzles (Linear & Circular)
+  {
+    bookTitle: 'A Modern Approach to Verbal & Non-Verbal Reasoning',
+    author: 'Dr. R.S. Aggarwal / S. Chand Publishing',
+    topicId: 'topic-seating-arrangement',
+    questions: [
+      {
+        qtype: 'mcq',
+        questionText: 'Five executives (P, Q, R, S, T) sit in a straight linear row facing North. S is sitting immediately between P and R. Q is sitting to the immediate right of R. T is sitting at the extreme left end. Who is sitting at the second position from the right end?',
+        options: ['R', 'S', 'P', 'Q'],
+        correctAnswer: 'R',
+        explanation: 'Linear arrangement from left to right: T (extreme left) -> P -> S -> R -> Q (extreme right). The person at the second position from the right end is R.',
+        bloomLevel: 'Analyze',
+        bookRef: 'R.S. Aggarwal, Verbal Reasoning, Ch. "Linear Arrangement", Problem 14'
+      },
+      {
+        qtype: 'mcq',
+        questionText: 'In a single row of 45 students facing North, Anita is 16th from the left extreme. What is her rank from the right extreme of the row?',
+        options: ['30th', '29th', '31st', '28th'],
+        correctAnswer: '30th',
+        explanation: 'Total = Left + Right - 1. Therefore: Right = Total - Left + 1 = 45 - 16 + 1 = 30th position.',
+        bloomLevel: 'Apply',
+        bookRef: 'R.S. Aggarwal, Ch. "Ranking & Position Tests"'
+      },
+      {
+        qtype: 'mcq',
+        questionText: 'Eight persons (A, B, C, D, E, F, G, H) sit around a circular table facing the center. A sits third to the right of B. C sits second to the left of A. D is not an immediate neighbor of either A or B. If H sits opposite to A, who sits to the immediate left of C?',
+        options: ['D', 'F', 'B', 'G'],
+        correctAnswer: 'D',
+        explanation: 'Mapping the 8 circular positions clockwise: with A at position 1 and B at position 6 (since A is 3rd right of B). C is 2nd left of A (pos 7). Resolving constraints establishes D directly to the immediate left of C.',
+        bloomLevel: 'Evaluate',
+        bookRef: 'R.S. Aggarwal, Reasoning, Ch. "Circular Seating Puzzles", Ex 8'
+      },
+      {
+        qtype: 'short',
+        questionText: 'In a class row, Suresh is 7th from the top and Ramesh is 28th from the bottom. If there are 4 students between them, what is the minimum possible total number of students in the class?',
+        options: [],
+        correctAnswer: '29',
+        explanation: 'For overlapping minimum case: Total = (Position from top + Position from bottom) - (Students between + 2) = (7 + 28) - (4 + 2) = 35 - 6 = 29 students.',
+        bloomLevel: 'Evaluate',
+        bookRef: 'Fast Track Reasoning, Minimum Overlap Theorem'
+      }
+    ]
+  },
+
+  // 12. Syllogisms
+  {
+    bookTitle: 'Analytical Reasoning',
+    author: 'M.K. Pandey / BSC Publishing',
+    topicId: 'topic-syllogisms',
+    questions: [
+      {
+        qtype: 'mcq',
+        questionText: 'Statements: All computers are machines. All machines are instruments. Conclusions: I. All computers are instruments. II. Some instruments are computers.',
+        options: ['Both I and II follow', 'Only I follows', 'Only II follows', 'Neither follows'],
+        correctAnswer: 'Both I and II follow',
+        explanation: 'All A are B + All B are C yields All A are C (valid deduction I). Also All A are C implies Some C are A (valid converse deduction II).',
+        bloomLevel: 'Understand',
+        bookRef: 'M.K. Pandey, Syllogisms, Categorical Syllogisms Section'
+      },
+      {
+        qtype: 'mcq',
+        questionText: 'Statements: Some papers are files. No file is a folder. Conclusions: I. Some papers are not folders. II. Some folders are files.',
+        options: ['Only I follows', 'Only II follows', 'Both follow', 'Neither follows'],
+        correctAnswer: 'Only I follows',
+        explanation: 'The papers that are files cannot be folders (Conclusion I follows). Conclusion II directly contradicts the premise "No file is a folder".',
+        bloomLevel: 'Analyze',
+        bookRef: 'M.K. Pandey, Analytical Reasoning, Negative Syllogism Rule'
+      }
+    ]
+  },
+  // 12. Problems on Trains (100 Questions Official Module)
+  {
+    bookTitle: 'Aptitude Test Bank: Train Problems (100 Numerical Questions across 10 Rules)',
+    author: 'Official PDF Examination Module for Live Test',
+    topicId: 'topic-trains',
+    questions: TRAIN_PROBLEMS_100_BANK.map((q) => ({
+      qtype: 'mcq' as const,
+      questionText: q.questionText,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation,
+      bloomLevel: (q.bloomLevel as any) || 'Apply',
+      bookRef: `${q.ruleTitle} - Q${q.qNum}`
+    }))
   }
 ];
 

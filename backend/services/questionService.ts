@@ -5,6 +5,7 @@ import { db } from '../../server/db.js';
 import { generateMockQuestions } from '../../server/mockGenerator.js';
 import { getBookQuestionsForTopic, getAllBookQuestions, BOOK_QUESTION_REPOSITORIES } from '../../server/bookQuestions.js';
 import { getAiClient } from './gradingService.js';
+import { TRAIN_PROBLEMS_100_BANK, getTrain100Questions } from '../../server/trains100Data.js';
 
 export function getBloomInstruction(level: string): string {
   switch (level) {
@@ -70,6 +71,25 @@ export class QuestionService {
       }
     } catch (err) {
       console.warn('MongoDB query for questions fallback to book pool:', err);
+    }
+
+    // If topic is Trains, return from the official 100-question PDF bank
+    if (filters.topicId === 'topic-trains') {
+      return TRAIN_PROBLEMS_100_BANK.map((q) => ({
+        id: q.id,
+        topicId: q.topicId,
+        subjectId: q.subjectId,
+        bloomLevel: q.bloomLevel,
+        qtype: q.qtype,
+        questionText: q.questionText,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        approved: true,
+        syllabusUnit: 'Unit III: Train Problems - 100 Questions Official Module',
+        learningOutcomes: 'Master all 10 rules of train relative velocity and time calculations.',
+        createdAt: new Date().toISOString(),
+      }));
     }
 
     // If MongoDB collection has no questions yet, return from verified book pool
@@ -177,7 +197,20 @@ export class QuestionService {
       return items.sort(() => Math.random() - 0.5).slice(0, qty);
     };
 
-    if (sourceMode === 'bank') {
+    if (topicId === 'topic-trains') {
+      // Train Problems Official Module: Strictly and exclusively drawn from the 100-question PDF bank
+      const trainBank = getTrain100Questions(countNum);
+      finalQuestions = trainBank.map((q) => ({
+        id: q.id,
+        qtype: q.qtype,
+        questionText: q.questionText,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        bloomLevel: q.bloomLevel,
+      }));
+      isOfflineMode = true;
+    } else if (sourceMode === 'bank') {
       finalQuestions = await getBankItems(countNum);
       isOfflineMode = true;
     } else if (sourceMode === 'book') {
@@ -226,34 +259,45 @@ Requirements:
 5. Short-answer questions must have empty options arrays and direct numerical or short textual answers.
 6. Provide a detailed, step-by-step mathematical explanation showing formula derivations.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: prompt,
-          config: {
-            maxOutputTokens: 8192,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  qtype: { type: Type.STRING },
-                  questionText: { type: Type.STRING },
-                  options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  correctAnswer: { type: Type.STRING },
-                  explanation: { type: Type.STRING },
-                  bloomLevel: { type: Type.STRING },
-                },
-                required: ['qtype', 'questionText', 'options', 'correctAnswer', 'explanation'],
-              },
-            },
-          },
-        });
+        const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+        let response: any = null;
+        let lastModelErr = null;
 
-        if (response.text) {
+        for (const m of candidateModels) {
+          try {
+            response = await ai.models.generateContent({
+              model: m,
+              contents: prompt,
+              config: {
+                maxOutputTokens: 8192,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      qtype: { type: Type.STRING },
+                      questionText: { type: Type.STRING },
+                      options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      correctAnswer: { type: Type.STRING },
+                      explanation: { type: Type.STRING },
+                      bloomLevel: { type: Type.STRING },
+                    },
+                    required: ['qtype', 'questionText', 'options', 'correctAnswer', 'explanation'],
+                  },
+                },
+              },
+            });
+            if (response && response.text) break;
+          } catch (mErr) {
+            lastModelErr = mErr;
+          }
+        }
+
+        if (response && response.text) {
           aiGenerated = JSON.parse(response.text);
         } else {
-          throw new Error('Empty response from Gemini');
+          throw lastModelErr || new Error('Empty response from Gemini');
         }
       } catch (geminiErr: any) {
         console.warn('Gemini question generation fallback:', geminiErr?.message || geminiErr);
@@ -270,31 +314,37 @@ Requirements:
     }
 
     // Deduplicate questions by questionText
-    const seenTexts = new Set<string>();
-    let uniqueQuestions = finalQuestions.filter((q: any) => {
-      const clean = String(q.questionText || '').trim().toLowerCase();
-      if (!clean || seenTexts.has(clean)) return false;
-      seenTexts.add(clean);
-      return true;
-    });
+    let uniqueQuestions: any[] = [];
+    if (topicId === 'topic-trains') {
+      // Questions are already strictly chosen from the 100-question PDF bank
+      uniqueQuestions = finalQuestions.slice(0, countNum);
+    } else {
+      const seenTexts = new Set<string>();
+      uniqueQuestions = finalQuestions.filter((q: any) => {
+        const clean = String(q.questionText || '').trim().toLowerCase();
+        if (!clean || seenTexts.has(clean)) return false;
+        seenTexts.add(clean);
+        return true;
+      });
 
-    // Backfill if needed
-    let attempts = 0;
-    while (uniqueQuestions.length < countNum && attempts < 5) {
-      attempts++;
-      const needed = countNum - uniqueQuestions.length;
-      const fillers = generateMockQuestions(topicId, levelsArray[0] || 'Apply', Math.max(needed + 10, 15));
-      for (const f of fillers) {
-        const clean = String(f.questionText || '').trim().toLowerCase();
-        if (!seenTexts.has(clean)) {
-          seenTexts.add(clean);
-          uniqueQuestions.push(f);
-          if (uniqueQuestions.length >= countNum) break;
+      // Backfill if needed
+      let attempts = 0;
+      while (uniqueQuestions.length < countNum && attempts < 5) {
+        attempts++;
+        const needed = countNum - uniqueQuestions.length;
+        const fillers = generateMockQuestions(topicId, levelsArray[0] || 'Apply', Math.max(needed + 10, 15));
+        for (const f of fillers) {
+          const clean = String(f.questionText || '').trim().toLowerCase();
+          if (!seenTexts.has(clean)) {
+            seenTexts.add(clean);
+            uniqueQuestions.push(f);
+            if (uniqueQuestions.length >= countNum) break;
+          }
         }
       }
-    }
 
-    uniqueQuestions = uniqueQuestions.slice(0, countNum);
+      uniqueQuestions = uniqueQuestions.slice(0, countNum);
+    }
 
     // Map questions with unique IDs
     const mappedQuestions: ITestSessionQuestion[] = uniqueQuestions.map((q: any, idx: number) => {

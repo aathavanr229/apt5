@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Attempt, IAttempt, IAttemptAnswer } from '../models/Attempt.js';
 import { Student } from '../models/Student.js';
@@ -51,26 +52,52 @@ export interface GradeAttemptInput {
   topicName?: string;
   subjectId?: string;
   bloomLevel?: string;
-  timeTakenSeconds: number;
+  timeTakenSeconds?: number;
   answers: SubmittedAnswerInput[];
 }
 
 export class GradingService {
   /**
-   * Evaluates answers authoritatively, checks equivalence via Gemini Flash, and persists Attempt to MongoDB.
+   * Evaluates answers authoritatively, checks equivalence via Gemini Flash, and persists Attempt to MongoDB & Local DB.
    */
   static async evaluateAndSaveAttempt(input: GradeAttemptInput): Promise<IAttempt> {
     const { student, testCode, topicId, topicName, subjectId, bloomLevel, timeTakenSeconds, answers } = input;
 
-    // 1. Authoritative Student Identity from MongoDB
-    const studentDoc = await Student.findById(student.id);
+    // 1. Authoritative Student Identity lookup with safe fallback
+    let studentDoc: any = null;
+    try {
+      if (student.id && mongoose.Types.ObjectId.isValid(student.id)) {
+        studentDoc = await Student.findById(student.id);
+      } else if (student.rollNumber) {
+        studentDoc = await Student.findOne({ rollNumber: student.rollNumber.toUpperCase() });
+      }
+    } catch (e) {
+      console.warn('Notice: Student lookup in MongoDB skipped:', e);
+    }
+
     const realStudentName = studentDoc ? studentDoc.name : student.name;
     const realStudentRoll = studentDoc ? studentDoc.rollNumber : student.rollNumber;
     const realStudentEmail = studentDoc ? studentDoc.email : student.email;
     const realStudentDept = studentDoc ? studentDoc.department : student.department;
 
+    // Determine a valid MongoDB ObjectId for studentId field
+    let validStudentId: mongoose.Types.ObjectId;
+    if (studentDoc && studentDoc._id) {
+      validStudentId = studentDoc._id;
+    } else if (student.id && mongoose.Types.ObjectId.isValid(student.id)) {
+      validStudentId = new mongoose.Types.ObjectId(student.id);
+    } else {
+      validStudentId = new mongoose.Types.ObjectId();
+    }
+
     // 2. Fetch locked questions from TestSession if present
-    const testSession = await TestSession.findOne({ testCode });
+    let testSession: any = null;
+    try {
+      testSession = await TestSession.findOne({ testCode });
+    } catch {
+      // Offline fallback
+    }
+
     const sessionQuestionsMap = new Map<string, any>();
     if (testSession && Array.isArray(testSession.questions)) {
       for (const q of testSession.questions) {
@@ -121,21 +148,31 @@ Student Answer: ${userAnswer}
 Consider equivalent formats, rounding (e.g. 0.33 vs 1/3), percentages (e.g. 50% vs 0.5), algebraic forms, and standard units.
 Provide a boolean field 'correct' and a short explanation 'reason'.`;
 
-              const aiRes = await ai.models.generateContent({
-                model: 'gemini-3.6-flash',
-                contents: verifyPrompt,
-                config: {
-                  responseMimeType: 'application/json',
-                  responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                      correct: { type: Type.BOOLEAN },
-                      reason: { type: Type.STRING },
+              const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+              let aiRes: any = null;
+
+              for (const m of candidateModels) {
+                try {
+                  aiRes = await ai.models.generateContent({
+                    model: m,
+                    contents: verifyPrompt,
+                    config: {
+                      responseMimeType: 'application/json',
+                      responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                          correct: { type: Type.BOOLEAN },
+                          reason: { type: Type.STRING },
+                        },
+                        required: ['correct', 'reason'],
+                      },
                     },
-                    required: ['correct', 'reason'],
-                  },
-                },
-              });
+                  });
+                  if (aiRes && aiRes.text) break;
+                } catch {
+                  // try next model
+                }
+              }
 
               if (aiRes.text) {
                 const check = JSON.parse(aiRes.text);
@@ -183,9 +220,13 @@ Provide a boolean field 'correct' and a short explanation 'reason'.`;
     const totalQuestions = Math.max(1, answers.length);
     const percentage = Math.round((score / totalQuestions) * 100);
 
+    const attemptObjectId = new mongoose.Types.ObjectId();
+    const attemptIdStr = attemptObjectId.toString();
+
     const attemptData = {
-      id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      studentId: studentDoc ? studentDoc._id : student.id,
+      _id: attemptObjectId,
+      id: attemptIdStr,
+      studentId: validStudentId,
       studentName: realStudentName,
       studentRoll: realStudentRoll,
       studentEmail: realStudentEmail,
@@ -220,7 +261,8 @@ Provide a boolean field 'correct' and a short explanation 'reason'.`;
     }
 
     return (attemptDoc || {
-      _id: attemptData.id,
+      _id: attemptObjectId,
+      id: attemptIdStr,
       ...attemptData
     }) as IAttempt;
   }
