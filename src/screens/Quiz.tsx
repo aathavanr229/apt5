@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Question, Topic } from '../types';
-import { FileText, ArrowLeft, Loader2, Sparkles, AlertCircle, BookOpen, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, ArrowLeft, Loader2, Sparkles, AlertCircle, BookOpen, GraduationCap, ChevronDown, ChevronUp, Clock, Timer, Hourglass } from 'lucide-react';
 import { StudentProfile } from '../components/StudentLoginModal';
 
 interface QuizProps {
@@ -51,6 +51,24 @@ export default function Quiz({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState<number>(Date.now());
 
+  // Dynamic Exam Countdown Timer: 2 minutes per question (e.g. 10 questions = 20 minutes)
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [totalAllocatedSeconds, setTotalAllocatedSeconds] = useState<number>(0);
+  const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
+  const autoSubmittedRef = useRef(false);
+
+  // Up-to-date refs for timer callback to prevent stale closures
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const studentNameRef = useRef(studentName);
+  studentNameRef.current = studentName;
+  const studentRollRef = useRef(studentRoll);
+  studentRollRef.current = studentRoll;
+  const testCodeRef = useRef(testCode);
+  testCodeRef.current = testCode;
+  const questionsRef = useRef(questions);
+  questionsRef.current = questions;
+
   // Fetch Topic & Generate Questions
   useEffect(() => {
     // Get topic details
@@ -74,9 +92,17 @@ export default function Quiz({
       })
       .then((data) => {
         setQuestions(data.questions);
+        questionsRef.current = data.questions;
         if (data.testCode) {
           setTestCode(data.testCode);
+          testCodeRef.current = data.testCode;
         }
+
+        // Timer allocation: Exactly 2 minutes per question (e.g. 10 questions = 20 minutes)
+        const qCount = data.questions?.length || count || 10;
+        const totalSecs = qCount * 2 * 60;
+        setTimeLeft(totalSecs);
+        setTotalAllocatedSeconds(totalSecs);
         setLoading(false);
       })
       .catch((err) => {
@@ -85,16 +111,37 @@ export default function Quiz({
       });
   }, [topicId, bloomLevel, JSON.stringify(bloomLevels), sourceMode, count]);
 
-
-  // 3. Handle selections
+  // Handle selections
   const handleAnswerChange = (qId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [qId]: value }));
   };
 
-  // 4. Submit Examination Paper
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentName.trim() || !studentRoll.trim()) {
+  // Format seconds into MM:SS or HH:MM:SS
+  const formatTime = (seconds: number) => {
+    if (seconds <= 0) return '00:00';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    const mStr = mins.toString().padStart(2, '0');
+    const sStr = secs.toString().padStart(2, '0');
+    if (hrs > 0) {
+      return `${hrs}:${mStr}:${sStr}`;
+    }
+    return `${mStr}:${sStr}`;
+  };
+
+  // Submit Examination Paper (manual form submit OR auto-exit on timer expiration)
+  const executeSubmission = async (isAutoTimeout = false) => {
+    if (isSubmitting || (autoSubmittedRef.current && !isAutoTimeout)) return;
+    if (isAutoTimeout) {
+      autoSubmittedRef.current = true;
+      setIsTimeUp(true);
+    }
+
+    const currentName = (studentNameRef.current || student?.name || '').trim();
+    const currentRoll = (studentRollRef.current || student?.roll || '').trim();
+
+    if (!isAutoTimeout && (!currentName || !currentRoll)) {
       setShowFormError(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -112,25 +159,29 @@ export default function Quiz({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const cleanName = studentName.trim() || student?.name || 'Candidate';
-      const cleanRoll = (studentRoll.trim() || student?.roll || 'CANDIDATE').toUpperCase();
+      const cleanName = currentName || 'Candidate';
+      const cleanRoll = (currentRoll || 'AUTO-TIMEUP').toUpperCase();
       const cleanDept = student?.department || 'Computer Science & Engineering';
       const cleanEmail = student?.email || `${cleanRoll.toLowerCase()}@kongu.edu`;
 
+      const currentQuestions = questionsRef.current.length > 0 ? questionsRef.current : questions;
+      const currentAnswers = answersRef.current;
+      const codeToUse = testCodeRef.current || testCode || `APT-${topicId.toUpperCase()}-${Date.now().toString().slice(-4)}`;
+
       const requestPayload = {
-        testCode: testCode || `APT-${topicId.toUpperCase()}-${Date.now().toString().slice(-4)}`,
+        testCode: codeToUse,
         topicId,
         topicName: topic?.name || 'Aptitude Test',
         subjectId: topic?.subjectId || 'subj-aptitude',
-        bloomLevel,
+        bloomLevel: topicId === 'topic-trains' ? 'Train 100 Dataset' : bloomLevel,
         studentName: cleanName,
         studentRoll: cleanRoll,
         studentDepartment: cleanDept,
         studentEmail: cleanEmail,
         timeTakenSeconds: elapsedSeconds,
-        answers: questions.map((q) => ({
+        answers: currentQuestions.map((q) => ({
           questionId: q.id,
-          userAnswer: answers[q.id] || '',
+          userAnswer: currentAnswers[q.id] || '',
           questionText: q.questionText,
           qtype: q.qtype,
           options: q.options,
@@ -148,12 +199,45 @@ export default function Quiz({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Evaluation server error');
       
-      onQuizComplete(data.attemptId, data.testCode || testCode);
+      onQuizComplete(data.attemptId, data.testCode || codeToUse);
     } catch (err: any) {
+      console.error('Submission error:', err);
       alert(`Submission error: ${err.message}`);
       setIsSubmitting(false);
     }
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeSubmission(false);
+  };
+
+  // Timer interval with automatic exit when time runs out
+  useEffect(() => {
+    if (loading || timeLeft === null || isSubmitting) return;
+
+    if (timeLeft <= 0) {
+      if (!autoSubmittedRef.current) {
+        autoSubmittedRef.current = true;
+        setIsTimeUp(true);
+        executeSubmission(true);
+      }
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [loading, timeLeft, isSubmitting]);
 
   if (loading) {
     return (
@@ -204,8 +288,80 @@ export default function Quiz({
         Back to Topic
       </button>
 
+      {/* Dynamic Exam Countdown Timer Floating Bar */}
+      <div className="sticky top-16 z-30 mb-6 bg-paper/95 backdrop-blur-md border-2 border-beige shadow-md p-3.5 sm:px-6 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl border flex items-center justify-center transition-all ${
+            timeLeft !== null && timeLeft <= 60 
+              ? 'bg-red-100 text-red-600 border-red-300 animate-bounce' 
+              : timeLeft !== null && timeLeft <= 180 
+              ? 'bg-amber-100 text-amber-700 border-amber-300 animate-pulse' 
+              : 'bg-rust/10 text-rust border-rust/20'
+          }`}>
+            <Clock className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xxs font-mono uppercase tracking-wider font-bold text-olive">
+                Assessment Timer Active
+              </span>
+              <span className="text-xxs font-mono bg-cream px-2 py-0.5 rounded border border-beige text-olive font-semibold">
+                {questions.length} Questions &times; 2 min = {questions.length * 2}m Total
+              </span>
+            </div>
+            <p className="text-xs font-serif font-bold text-ink mt-0.5">
+              {timeLeft !== null && timeLeft <= 60 ? (
+                <span className="text-red-600 animate-pulse font-sans">
+                  Critical: Under 1 minute left! Auto-exit will trigger on 00:00.
+                </span>
+              ) : timeLeft !== null && timeLeft <= 180 ? (
+                <span className="text-amber-700 font-sans">
+                  Warning: Final 3 minutes remaining, review responses.
+                </span>
+              ) : (
+                <span>2 minutes per question pace &bull; Automatic exit on timeout</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xxs font-mono text-olive uppercase font-bold mr-1 hidden sm:inline">Time Left:</span>
+          <div className={`font-mono text-xl sm:text-2xl font-black px-3.5 py-1 rounded-xl border tabular-nums shadow-xs ${
+            timeLeft !== null && timeLeft <= 60
+              ? 'bg-red-50 text-red-600 border-red-400 animate-pulse'
+              : timeLeft !== null && timeLeft <= 180
+              ? 'bg-amber-50 text-amber-700 border-amber-300'
+              : 'bg-paper text-rust border-rust/30'
+          }`}>
+            {formatTime(timeLeft ?? (questions.length * 2 * 60))}
+          </div>
+        </div>
+      </div>
+
+      {/* Time-up auto-exit overlay */}
+      {isTimeUp && (
+        <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-md flex flex-col items-center justify-center text-center p-4">
+          <div className="bg-paper p-8 rounded-2xl max-w-md w-full shadow-2xl border-2 border-red-500 flex flex-col items-center animate-fadeIn">
+            <div className="p-3.5 bg-red-100 text-red-600 rounded-full mb-3 animate-bounce">
+              <Timer className="h-9 w-9" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-ink mb-1">
+              Examination Time Expired!
+            </h3>
+            <p className="text-xs text-olive leading-relaxed mb-5">
+              Allocated test duration ({questions.length * 2} minutes at 2 minutes per question) has ended. Test is automatically exiting and recording your submissions...
+            </p>
+            <div className="flex items-center gap-2 text-rust font-semibold text-xs">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Submitting answers for evaluation scorecard...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Submission Overlay */}
-      {isSubmitting && (
+      {isSubmitting && !isTimeUp && (
         <div className="fixed inset-0 z-50 bg-paper/95 flex flex-col items-center justify-center text-center p-4">
           <Loader2 className="h-10 w-10 text-rust animate-spin mb-4" />
           <h3 className="font-serif text-2xl font-bold text-ink mb-1">
@@ -290,11 +446,22 @@ export default function Quiz({
               )}
               <span>Syllabus: <span className="font-semibold text-ink">{topic?.syllabusUnit.split(':')[0]}</span></span>
               <span>&bull;</span>
-              <span>Bloom's taxonomy: <span className="font-semibold text-ink uppercase">{bloomLevel}</span></span>
-              <span>&bull;</span>
+              {topicId === 'topic-trains' ? (
+                <>
+                  <span>Dataset: <span className="font-semibold text-amber-700">Official 100-Question Train Bank</span></span>
+                  <span>&bull;</span>
+                </>
+              ) : (
+                <>
+                  <span>Bloom's taxonomy: <span className="font-semibold text-ink uppercase">{bloomLevel}</span></span>
+                  <span>&bull;</span>
+                </>
+              )}
               <span>Questions: <span className="font-semibold text-ink">{questions.length} Items</span></span>
               <span>&bull;</span>
-              <span>Allocated Time: <span className="font-semibold text-ink">{Math.max(15, Math.ceil(questions.length * 1.5))} Mins</span></span>
+              <span>Allocated Time: <span className="font-semibold text-rust font-mono">{questions.length * 2} Mins (2 min/question)</span></span>
+              <span>&bull;</span>
+              <span>Time Left: <span className={`font-mono font-bold ${timeLeft !== null && timeLeft <= 60 ? 'text-red-600 animate-pulse' : timeLeft !== null && timeLeft <= 180 ? 'text-amber-700' : 'text-ink'}`}>{formatTime(timeLeft ?? 0)}</span></span>
             </div>
           </div>
 
@@ -423,14 +590,29 @@ export default function Quiz({
         </div>
 
         {/* Sticky Submit Bar */}
-        <div className="sticky bottom-0 bg-paper/90 backdrop-blur-md border border-beige p-4 rounded-xl shadow-md flex items-center justify-between gap-4">
-          <div className="text-left">
-            <p className="text-xs font-serif font-bold text-ink">
-              Examination Sheet
-            </p>
-            <p className="text-xxs text-olive">
-              {Object.keys(answers).length} of {questions.length} questions answered
-            </p>
+        <div className="sticky bottom-0 bg-paper/95 backdrop-blur-md border border-beige p-4 rounded-xl shadow-md flex items-center justify-between gap-4">
+          <div className="text-left flex items-center gap-4">
+            <div>
+              <p className="text-xs font-serif font-bold text-ink">
+                Examination Sheet
+              </p>
+              <p className="text-xxs text-olive">
+                {Object.keys(answers).length} of {questions.length} questions answered
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 pl-4 border-l border-beige font-mono text-xs">
+              <Clock className="h-4 w-4 text-rust" />
+              <span className="text-olive">Time Left:</span>
+              <span className={`font-bold tabular-nums px-2 py-0.5 rounded border ${
+                timeLeft !== null && timeLeft <= 60
+                  ? 'bg-red-50 text-red-600 border-red-300 animate-pulse'
+                  : timeLeft !== null && timeLeft <= 180
+                  ? 'bg-amber-50 text-amber-700 border-amber-300'
+                  : 'bg-paper text-rust border-rust/20'
+              }`}>
+                {formatTime(timeLeft ?? 0)}
+              </span>
+            </div>
           </div>
           <button
             type="submit"

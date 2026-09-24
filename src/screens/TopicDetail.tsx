@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Topic, BLOOM_LEVELS, BloomLevelType, QuestionSourceMode } from '../types';
-import { ArrowLeft, Sparkles, BookOpen, GraduationCap, CheckSquare, Square, Layers, Database, Cpu, GitCompare, Library, Sliders, Zap, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Sparkles, BookOpen, GraduationCap, CheckSquare, Square, Layers, Database, Cpu, GitCompare, Library, Sliders, Zap, Lightbulb, Clock, Timer } from 'lucide-react';
 
 interface TopicDetailProps {
   topicId: string;
@@ -301,143 +301,167 @@ export default function TopicDetail({ topicId, onGeneratePaper, onBack }: TopicD
                 </h3>
               </div>
 
-              {topicId === 'topic-trains' && (
-                <div className="mb-5 p-3.5 bg-gradient-to-br from-amber-50 to-orange-50/70 border-2 border-amber-300 rounded-xl shadow-2xs">
-                  <div className="flex items-start gap-2.5">
-                    <Zap className="h-4 w-4 text-amber-600 fill-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-serif font-bold text-ink">
-                        Official 100-Question PDF Module Active
-                      </p>
-                      <p className="text-xxs text-olive mt-0.5 leading-relaxed">
-                        Questions for this test are drawn <strong>strictly and exclusively</strong> from the verified 10-rule PDF test bank. Select any question count below (5 to 100).
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Form elements */}
               <div className="space-y-6">
-                {/* Bloom's taxonomy combinations */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-xs font-sans font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                      <Layers className="h-3.5 w-3.5 text-rust" />
-                      Bloom's Taxonomy Levels
-                    </label>
-                    <button
-                      type="button"
-                      onClick={selectAllBloomLevels}
-                      className="text-xxs font-bold text-rust hover:underline cursor-pointer"
-                    >
-                      Select All
-                    </button>
-                  </div>
+                {topicId === 'topic-trains' ? (
+                  /* Standardized Train 100 Dataset Panel - Bloom taxonomy and Source choices omitted */
+                  <div className="p-4 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-cream border-2 border-amber-400/80 rounded-xl shadow-2xs space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-2 bg-amber-500 text-neutral-950 rounded-lg shrink-0 mt-0.5 shadow-2xs">
+                        <Zap className="h-4 w-4 fill-neutral-950 text-neutral-950" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="px-2 py-0.5 rounded text-xxs font-bold uppercase tracking-wider bg-amber-500 text-neutral-950">
+                            Training 100-Data Set Active
+                          </span>
+                          <span className="text-xxs font-mono text-olive font-semibold">
+                            Standardized Benchmark Bank
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-serif font-bold text-ink">
+                          Official 100-Question Train Problems Module
+                        </h4>
+                        <p className="text-xxs text-olive mt-1 leading-relaxed">
+                          Questions for this test are drawn <strong>strictly and exclusively</strong> from the verified 10-rule Train Problems training dataset. Bloom cognitive classifications and question sources are standardized for this dataset.
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {BLOOM_LEVELS.map((lvl) => {
-                      const isChecked = selectedLevels.includes(lvl);
-                      return (
+                    <div className="grid grid-cols-2 gap-2 text-xxs font-mono pt-2 border-t border-amber-200/80">
+                      <div className="bg-paper/90 p-2.5 rounded-lg border border-amber-200/60">
+                        <span className="text-olive block text-xxs">Curriculum Coverage:</span>
+                        <span className="font-bold text-ink">All 10 Core Train Formulas</span>
+                      </div>
+                      <div className="bg-paper/90 p-2.5 rounded-lg border border-amber-200/60">
+                        <span className="text-olive block text-xxs">Question Pool:</span>
+                        <span className="font-bold text-amber-800">Fixed 100-Question Dataset</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Bloom's taxonomy combinations */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-sans font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
+                          <Layers className="h-3.5 w-3.5 text-rust" />
+                          Bloom's Taxonomy Levels
+                        </label>
                         <button
-                          key={lvl}
                           type="button"
-                          onClick={() => toggleBloomLevel(lvl)}
-                          className={`p-2.5 rounded-lg text-xs font-sans font-medium border flex items-center gap-2 transition-all cursor-pointer text-left ${
-                            isChecked
-                              ? 'bg-rust/10 text-rust border-rust/40 font-bold shadow-2xs'
-                              : 'bg-paper text-olive border-beige hover:bg-cream/50'
+                          onClick={selectAllBloomLevels}
+                          className="text-xxs font-bold text-rust hover:underline cursor-pointer"
+                        >
+                          Select All
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {BLOOM_LEVELS.map((lvl) => {
+                          const isChecked = selectedLevels.includes(lvl);
+                          return (
+                            <button
+                              key={lvl}
+                              type="button"
+                              onClick={() => toggleBloomLevel(lvl)}
+                              className={`p-2.5 rounded-lg text-xs font-sans font-medium border flex items-center gap-2 transition-all cursor-pointer text-left ${
+                                isChecked
+                                  ? 'bg-rust/10 text-rust border-rust/40 font-bold shadow-2xs'
+                                  : 'bg-paper text-olive border-beige hover:bg-cream/50'
+                              }`}
+                            >
+                              {isChecked ? (
+                                <CheckSquare className="h-4 w-4 text-rust shrink-0" />
+                              ) : (
+                                <Square className="h-4 w-4 text-olive/40 shrink-0" />
+                              )}
+                              <span className="truncate">{lvl}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Active selection summary */}
+                      <div className="bg-cream/40 p-2.5 rounded-lg border border-beige/70 mt-3 text-xxs font-mono text-ink/80 flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-rust shrink-0" />
+                        <span>Selected ({selectedLevels.length}): <strong>{selectedLevels.join(' + ')}</strong></span>
+                      </div>
+                    </div>
+
+                    {/* Question Source Mode */}
+                    <div>
+                      <label className="block text-xs font-sans font-bold text-ink mb-2.5 uppercase tracking-wider">
+                        Question Source
+                      </label>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setSourceMode('ai')}
+                          className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                            sourceMode === 'ai'
+                              ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
+                              : 'bg-cream/20 border-beige hover:bg-cream/50'
                           }`}
                         >
-                          {isChecked ? (
-                            <CheckSquare className="h-4 w-4 text-rust shrink-0" />
-                          ) : (
-                            <Square className="h-4 w-4 text-olive/40 shrink-0" />
-                          )}
-                          <span className="truncate">{lvl}</span>
+                          <Cpu className={`h-4 w-4 shrink-0 ${sourceMode === 'ai' ? 'text-rust' : 'text-olive'}`} />
+                          <div>
+                            <p className="text-xs font-bold text-ink">Dynamic Curriculum Generation</p>
+                            <p className="text-xxs text-olive">Creates fresh formula-backed practice questions</p>
+                          </div>
                         </button>
-                      );
-                    })}
-                  </div>
 
-                  {/* Active selection summary */}
-                  <div className="bg-cream/40 p-2.5 rounded-lg border border-beige/70 mt-3 text-xxs font-mono text-ink/80 flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-rust shrink-0" />
-                    <span>Selected ({selectedLevels.length}): <strong>{selectedLevels.join(' + ')}</strong></span>
-                  </div>
-                </div>
+                        <button
+                          type="button"
+                          onClick={() => setSourceMode('bank')}
+                          className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                            sourceMode === 'bank'
+                              ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
+                              : 'bg-cream/20 border-beige hover:bg-cream/50'
+                          }`}
+                        >
+                          <Database className={`h-4 w-4 shrink-0 ${sourceMode === 'bank' ? 'text-rust' : 'text-olive'}`} />
+                          <div>
+                            <p className="text-xs font-bold text-ink">Verified Question Bank</p>
+                            <p className="text-xxs text-olive">Pulls from curated faculty-approved question repository</p>
+                          </div>
+                        </button>
 
-                {/* Question Source Mode */}
-                <div>
-                  <label className="block text-xs font-sans font-bold text-ink mb-2.5 uppercase tracking-wider">
-                    Question Source
-                  </label>
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => setSourceMode('ai')}
-                      className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                        sourceMode === 'ai'
-                          ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
-                          : 'bg-cream/20 border-beige hover:bg-cream/50'
-                      }`}
-                    >
-                      <Cpu className={`h-4 w-4 shrink-0 ${sourceMode === 'ai' ? 'text-rust' : 'text-olive'}`} />
-                      <div>
-                        <p className="text-xs font-bold text-ink">Dynamic Curriculum Generation</p>
-                        <p className="text-xxs text-olive">Creates fresh formula-backed practice questions</p>
+                        <button
+                          type="button"
+                          onClick={() => setSourceMode('book')}
+                          className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                            sourceMode === 'book'
+                              ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
+                              : 'bg-cream/20 border-beige hover:bg-cream/50'
+                          }`}
+                        >
+                          <Library className={`h-4 w-4 shrink-0 ${sourceMode === 'book' ? 'text-rust' : 'text-olive'}`} />
+                          <div>
+                            <p className="text-xs font-bold text-ink">Standard Textbook Questions</p>
+                            <p className="text-xxs text-olive">Loads authentic problems from R.S. Aggarwal, Arun Sharma &amp; M. Tyra</p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSourceMode('hybrid')}
+                          className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                            sourceMode === 'hybrid'
+                              ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
+                              : 'bg-cream/20 border-beige hover:bg-cream/50'
+                          }`}
+                        >
+                          <Layers className={`h-4 w-4 shrink-0 ${sourceMode === 'hybrid' ? 'text-rust' : 'text-olive'}`} />
+                          <div>
+                            <p className="text-xs font-bold text-ink">Combined Comprehensive Mode</p>
+                            <p className="text-xxs text-olive">Balanced blend of question bank and dynamic problems</p>
+                          </div>
+                        </button>
                       </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSourceMode('bank')}
-                      className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                        sourceMode === 'bank'
-                          ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
-                          : 'bg-cream/20 border-beige hover:bg-cream/50'
-                      }`}
-                    >
-                      <Database className={`h-4 w-4 shrink-0 ${sourceMode === 'bank' ? 'text-rust' : 'text-olive'}`} />
-                      <div>
-                        <p className="text-xs font-bold text-ink">Verified Question Bank</p>
-                        <p className="text-xxs text-olive">Pulls from curated faculty-approved question repository</p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSourceMode('book')}
-                      className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                        sourceMode === 'book'
-                          ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
-                          : 'bg-cream/20 border-beige hover:bg-cream/50'
-                      }`}
-                    >
-                      <Library className={`h-4 w-4 shrink-0 ${sourceMode === 'book' ? 'text-rust' : 'text-olive'}`} />
-                      <div>
-                        <p className="text-xs font-bold text-ink">Standard Textbook Questions</p>
-                        <p className="text-xxs text-olive">Loads authentic problems from R.S. Aggarwal, Arun Sharma &amp; M. Tyra</p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSourceMode('hybrid')}
-                      className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                        sourceMode === 'hybrid'
-                          ? 'bg-paper border-rust ring-1 ring-rust shadow-2xs'
-                          : 'bg-cream/20 border-beige hover:bg-cream/50'
-                      }`}
-                    >
-                      <Layers className={`h-4 w-4 shrink-0 ${sourceMode === 'hybrid' ? 'text-rust' : 'text-olive'}`} />
-                      <div>
-                        <p className="text-xs font-bold text-ink">Combined Comprehensive Mode</p>
-                        <p className="text-xxs text-olive">Balanced blend of question bank and dynamic problems</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Question Count Slider & Quick Presets (Up to 100 max) */}
                 <div>
@@ -492,20 +516,40 @@ export default function TopicDetail({ topicId, onGeneratePaper, onBack }: TopicD
                   </div>
                 </div>
 
+                {/* Dynamic Exam Timer Preview Banner */}
+                <div className="p-3.5 bg-gradient-to-r from-cream/80 to-paper rounded-xl border border-beige flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-rust/10 text-rust rounded-lg shrink-0">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-sans font-bold text-ink">
+                        Allocated Exam Duration: <span className="text-rust">{count * 2} Minutes</span>
+                      </p>
+                      <p className="text-xxs text-olive mt-0.5">
+                        {count} questions &times; 2 minutes each &bull; Auto-submits and exits on 00:00
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-rust/10 text-rust border border-rust/20 shrink-0">
+                    {count * 2}m 00s
+                  </span>
+                </div>
+
                 {/* Actions */}
                 <button
                   type="button"
                   onClick={() => onGeneratePaper({
                     topicId: topic.id,
-                    bloomLevel: selectedLevels.join(' + '),
-                    bloomLevels: selectedLevels,
-                    sourceMode,
+                    bloomLevel: topicId === 'topic-trains' ? 'Train 100 Dataset' : selectedLevels.join(' + '),
+                    bloomLevels: topicId === 'topic-trains' ? ['Apply'] : selectedLevels,
+                    sourceMode: topicId === 'topic-trains' ? 'bank' : sourceMode,
                     count
                   })}
                   className="w-full bg-rust hover:bg-rust-dark text-paper font-sans font-semibold text-sm py-3 rounded-lg border border-rust shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <BookOpen className="h-4 w-4" />
-                  Generate Assessment Paper
+                  Generate Assessment Paper ({count} Qs &bull; {count * 2} Mins)
                 </button>
               </div>
             </div>
